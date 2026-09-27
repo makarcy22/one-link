@@ -1,0 +1,14 @@
+# Office temporary files
+~$*
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dependencies and local config
+node_modules/
+.env
+.env.local

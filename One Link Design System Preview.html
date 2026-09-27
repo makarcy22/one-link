@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>One Link Design System Preview</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --panel: #ffffff;
+    --ink: #111827;
+    --muted: #5b6472;
+    --line: #e5e7eb;
+    --brand: #4f46e5;
+    --brand-ink: #ffffff;
+    --accent: #06b6d4;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --chip: #eef2ff;
+    --radius: 14px;
+    --shadow: 0 10px 30px rgba(17, 24, 39, .08);
+  }
+  [data-theme="dark"] {
+    --bg: #0b1020;
+    --panel: #141b31;
+    --ink: #eef2ff;
+    --muted: #aab4c7;
+    --line: #26304a;
+    --brand: #818cf8;
+    --brand-ink: #0b1020;
+    --accent: #22d3ee;
+    --chip: #1e2a4a;
+    --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Inter, Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; }
+  .mark {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--brand), var(--accent));
+    display: inline-block;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 20px 16px 60px; }
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  .span-4 { grid-column: span 4; }
+  .span-6 { grid-column: span 6; }
+  .span-8 { grid-column: span 8; }
+  .span-12 { grid-column: span 12; }
+  h1 { font-size: 30px; margin: 8px 0; }
+  h2 { font-size: 20px; margin: 0 0 10px; }
+  p, li { color: var(--muted); line-height: 1.55; }
+  .btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--brand); color: var(--brand-ink); }
+  .btn-secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+  .swatch { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .color { height: 54px; }
+  .swatch div:last-child { padding: 8px; font-size: 12px; }
+  input, select, textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    background: transparent;
+    color: var(--ink);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    background: var(--chip);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+  }
+  .stat { font-size: 26px; font-weight: 800; margin: 0; }
+  .bars { display: flex; align-items: end; gap: 8px; height: 120px; margin-top: 10px; }
+  .bar { flex: 1; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--accent), var(--brand)); }
+  .check { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
+  .dot { width: 12px; height: 12px; border-radius: 999px; margin-top: 5px; }
+  .ok { background: var(--success); }
+  .warn { background: var(--warning); }
+  .bad { background: var(--danger); }
+  .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .day { border: 1px solid var(--line); border-radius: 8px; min-height: 54px; padding: 6px; font-size: 12px; }
+  .bubble {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 8px 0;
+    max-width: 520px;
+  }
+  @media (max-width: 860px) {
+    .span-4, .span-6, .span-8 { grid-column: span 12; }
+    h1 { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span class="mark"></span> One Link Design System</div>
+  <button class="btn btn-secondary" onclick="toggleTheme()">Light / Dark</button>
+</header>
+<main>
+  <div class="grid">
+    <section class="card span-12">
+      <h1>Create once. Reach everywhere.</h1>
+      <p>This preview shows the proposed One Link visual language: tokens, typography, components, creation workflows, publishing status, calendar planning, analytics, and assistant patterns.</p>
+      <div class="row">
+        <button class="btn btn-primary">Post Everywhere</button>
+        <button class="btn btn-secondary">Save Draft</button>
+        <span class="chip">TikTok ready</span>
+        <span class="chip">Reel ready</span>
+        <span class="chip">Manual export</span>
+      </div>
+    </section>
+
+    <section class="card span-6">
+      <h2>Color tokens</h2>
+      <div class="swatches">
+        <div class="swatch"><div class="color" style="background:#4f46e5"></div><div>Brand / #4F46E5</div></div>
+        <div class="swatch"><div class="color" style="background:#06b6d4"></div><div>Accent / #06B6D4</div></div>
+        <div class="swatch"><div class="color" style="background:#16a34a"></div><div>Success / #16A34A</div></div>
+        <div class="swatch"><div class="color" style="background:#d97706"></div><div>Warning / #D97706</div></div>
+        <div class="swatch"><div class="color" style="background:#dc2626"></div><div>Danger / #DC2626</div></div>
+        <div class="swatch"><div class="color" style="background:#111827"></div><div>Ink / #111827</div></div>
+      </div>
+    </section>
+
+    <section class="card span-6">
+      <h2>Typography</h2>
+      <p style="font-size:28px;color:var(--ink);margin:0">Display / Create</p>
+      <p style="font-size:20px;color:var(--ink)">Heading / Publish everywhere</p>
+      <p style="font-size:15px">Body / Captions, hashtags, schedules, analytics, and recommendations use readable body text.</p>
+      <p style="font-size:12px">Caption / Posting time, platform status, and helper text.</p>
+    </section>
+
+    <section class="card span-4">
+      <h2>Home stats</h2>
+      <p class="stat">48.2K</p><p>Reach this week</p>
+      <p class="stat">6.8%</p><p>Engagement rate</p>
+      <p class="stat">312</p><p>New followers</p>
+    </section>
+
+    <section class="card span-4">
+      <h2>Create input</h2>
+      <input value="New clothing drop teaser" />
+      <br /><br />
+      <textarea rows="3">Behind the scenes from today’s shoot. Full drop Friday.</textarea>
+      <br /><br />
+      <div class="chips"><span class="chip">#JubaFashion</span><span class="chip">#AfricanFashion</span><span class="chip">#Style</span></div>
+    </section>
+
+    <section class="card span-4">
+      <h2>Publish checklist</h2>
+      <div class="check"><span class="dot ok"></span><div>TikTok: vertical video, caption, hashtags ready.</div></div>
+      <div class="check"><span class="dot ok"></span><div>Instagram: Reel version ready.</div></div>
+      <div class="check"><span class="dot warn"></span><div>Facebook: description needs review.</div></div>
+      <div class="check"><span class="dot bad"></span><div>LinkedIn: professional caption missing.</div></div>
+    </section>
+
+    <section class="card span-8">
+      <h2>Analytics preview</h2>
+      <div class="bars">
+        <div class="bar" style="height:38%"></div>
+        <div class="bar" style="height:52%"></div>
+        <div class="bar" style="height:47%"></div>
+        <div class="bar" style="height:66%"></div>
+        <div class="bar" style="height:78%"></div>
+        <div class="bar" style="height:61%"></div>
+        <div class="bar" style="height:88%"></div>
+      </div>
+      <p>Performance summaries should use plain language, for example: “This video performed above your recent average and had strong watch completion.”</p>
+    </section>
+
+    <section class="card span-4">
+      <h2>Assistant</h2>
+      <div class="bubble">What should I post today?</div>
+      <div class="bubble">Post the clothing teaser as a Reel at 7 PM, then repurpose the hook as a TikTok tomorrow.</div>
+      <div class="row"><button class="btn btn-primary">Create This</button></div>
+    </section>
+
+    <section class="card span-12">
+      <h2>Planner preview</h2>
+      <div class="calendar">
+        <div class="day">Mon<br />Draft</div>
+        <div class="day">Tue<br />Scheduled</div>
+        <div class="day">Wed<br />Trend idea</div>
+        <div class="day">Thu<br />Published</div>
+        <div class="day">Fri<br />Campaign</div>
+        <div class="day">Sat<br />—</div>
+        <div class="day">Sun<br />—</div>
+      </div>
+    </section>
+  </div>
+</main>
+<script>
+  function toggleTheme() {
+    const root = document.documentElement;
+    root.dataset.theme = root.dataset.theme === "light" ? "dark" : "light";
+  }
+</script>
+</body>
+</html>
