@@ -16,7 +16,7 @@ This document converts the One Link PRD into a phased engineering and implementa
 - **File and media storage:** Cloudflare R2 for production, with local-disk storage for local development.
 - **Local-first development:** PostgreSQL, Redis, API, workers, and files run locally; no cloud dependency is required for MVP development.
 - **Architecture:** Modular monolith first.
-- **Design concept:** `One Link Design Concept V2.html`, including its animated one-to-many publishing trailer.
+- **Design concept:** `design.html`, including its animated one-to-many publishing trailer.
 
 what I have asked the ai “i want you to use the information to edit the implementation plan, i want you to use postgrlsql for database, better auth for authotication what do you reccommendation and why do you reccommand it and storage i will use cloudflare r2 at the moment every thing will run on my local disk”? this was the deicision I made 
 
@@ -166,7 +166,7 @@ Require:
 - Complete design-token system.
 - Core UI component library.
 - High-fidelity MVP screens for Home, Create, Trends, Planner, Analytics, Assistant, and Profile.
-- Locked visual direction: `One Link Design Concept V2.html`.
+- Locked visual direction: `design.html`.
 - Accessibility checklist incorporated into definition of done.
 
 ---

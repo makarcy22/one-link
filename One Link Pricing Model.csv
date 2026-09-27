@@ -1,7 +1,0 @@
-Scenario,Total_Users,Free_Users,Paying_Users,ARPU_Monthly_USD,Gross_MRR_USD,Variable_Cost_Per_Paying_User_USD,Fixed_Costs_USD,Total_Cost_USD,Net_Monthly_USD
-Beta_100_Conservative,100,95,5,19,95,6,250,280,-185
-Beta_100_Base,100,90,10,24,240,7,250,320,-80
-Beta_100_Optimistic,100,80,20,29,580,8,250,410,170
-Scale_1000_Conservative,1000,950,50,19,950,6,800,1100,-150
-Scale_1000_Base,1000,900,100,24,2400,7,800,1500,900
-Scale_1000_Optimistic,1000,800,200,29,5800,8,800,2400,3400
