@@ -18,12 +18,6 @@ This document converts the One Link PRD into a phased engineering and implementa
 - **Architecture:** Modular monolith first.
 - **Design concept:** `design.html`, including its animated one-to-many publishing trailer.
 
-what I have asked the ai “i want you to use the information to edit the implementation plan, i want you to use postgrlsql for database, better auth for authotication what do you reccommendation and why do you reccommand it and storage i will use cloudflare r2 at the moment every thing will run on my local disk”? this was the deicision I made 
-
-
-then I asked the ai to change the systems 
-
- 
 ---
 
 # Current Repository State
