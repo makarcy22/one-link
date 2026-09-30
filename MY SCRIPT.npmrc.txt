@@ -1,0 +1,19 @@
+PS C:\Users\MrRobot Technologies\Downloads\New folder> npm run setup
+
+> one-link@0.1.0 setup
+> npm install
+
+npm warn deprecated cron-parser@4.9.0: v4 is no longer maintained, upgrade to v5
+
+added 185 packages, and audited 196 packages in 3m
+
+37 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+npm warn allow-scripts 2 packages have install scripts not yet covered by allowScripts:
+npm warn allow-scripts   msgpackr-extract@3.0.4 (install: node-gyp-build-optional-packages)
+npm warn allow-scripts   esbuild@0.28.2 (postinstall: node install.js)
+npm warn allow-scripts
+npm warn allow-scripts Run `npm approve-scripts --allow-scripts-pending` to review, or `npm approve-scripts <pkg>` to allow.
+PS C:\Users\MrRobot Technologies\Downloads\New folder>

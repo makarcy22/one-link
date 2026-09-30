@@ -11,3 +11,6 @@ Run Postgres 16 and Redis 7 via `docker-compose.yml`. Application code runs on N
 
 ## Consequences
 Reproducible environments; developers need Docker Desktop with WSL 2 on Windows.
+
+## Amendment (2026-09-30)
+On machines without BIOS virtualization, Plan B applies: PostgreSQL 16 and Memurai Developer (Redis-compatible) installed natively on Windows. Connection strings stay identical (`localhost:5432`, `localhost:6379`), so application code is unaffected.

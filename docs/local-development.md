@@ -53,6 +53,33 @@ npm run infra:ps     # check service status
 - **npm blocked by execution policy:** `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`.
 - **Fresh database:** `docker compose down -v` deletes the volumes and all local data. Use with care.
 
+## Plan B: no Docker (native Windows install)
+
+Use this when BIOS virtualization cannot be enabled. Install PostgreSQL 16 and Memurai Developer (Redis-compatible server) directly on Windows:
+
+```powershell
+winget install -e --id PostgreSQL.PostgreSQL.16 --source winget
+winget install -e --id Memurai.MemuraiDeveloper --source winget
+```
+
+The PostgreSQL installer asks for a superuser (`postgres`) password — choose one and store it safely; it is dev-only. Keep port `5432`.
+
+Create the app role and database (replace the path if you installed a different major version):
+
+```powershell
+& "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -c "CREATE ROLE onelink WITH LOGIN PASSWORD 'onelink' CREATEDB;"
+& "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -c "CREATE DATABASE onelink OWNER onelink;"
+```
+
+Verify both services:
+
+```powershell
+& "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U onelink -d onelink -c "SELECT 1;"
+memurai-cli ping
+```
+
+Expected: a `SELECT 1` result row and `PONG`. The `.env` connection strings stay identical to Plan A (`localhost:5432`, `localhost:6379`).
+
 ## What runs where
 
 | Service   | Local address       | Purpose                              |
