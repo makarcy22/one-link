@@ -1,0 +1,7 @@
+{
+  "name": "@one-link/platform-connectors",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Publishing adapters. Each connector implements only the capabilities its platform supports."
+}

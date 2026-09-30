@@ -1,0 +1,7 @@
+{
+  "name": "@one-link/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared React component library built on the One Link design system."
+}

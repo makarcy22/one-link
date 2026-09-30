@@ -1,0 +1,7 @@
+{
+  "name": "@one-link/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Provider-agnostic AI orchestration: prompts, brand context, moderation, caching, cost tracking."
+}

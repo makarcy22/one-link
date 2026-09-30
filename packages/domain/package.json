@@ -1,0 +1,7 @@
+{
+  "name": "@one-link/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Core domain types and validation: users, brands, content, schedules, publishing jobs, analytics."
+}

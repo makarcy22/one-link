@@ -1,0 +1,7 @@
+{
+  "name": "@one-link/analytics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Metric normalization, aggregation, engagement scoring, and performance explanations."
+}

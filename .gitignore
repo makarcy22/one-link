@@ -12,3 +12,10 @@ desktop.ini
 node_modules/
 .env
 .env.local
+
+# Build outputs
+dist/
+build/
+.vite/
+coverage/
+storage/
