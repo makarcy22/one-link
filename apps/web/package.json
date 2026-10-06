@@ -4,11 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host localhost --port 5173",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "better-auth": "1.7.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
