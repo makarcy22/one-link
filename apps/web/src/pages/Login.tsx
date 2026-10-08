@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { authClient, signIn } from "../auth/auth-client";
+import { authClient, signIn, twoFactor } from "../auth/auth-client";
 
 export default function Login({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState("");
@@ -9,18 +9,41 @@ export default function Login({ onDone }: { onDone: () => void }) {
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotMsg, setForgotMsg] = useState("");
+  const [needTotp, setNeedTotp] = useState(false);
+  const [totp, setTotp] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setBusy(true);
-    const { error } = await signIn.email({ email, password });
+    const { data, error } = await signIn.email({ email, password });
     setBusy(false);
     if (error) {
       setError(error.message ?? "Sign in failed.");
       return;
     }
+    const needs2fa = (data as unknown as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect;
+    if (needs2fa) {
+      setNeedTotp(true);
+      return;
+    }
     onDone();
+  }
+
+  async function handleTotp(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    const { error } = await twoFactor.verifyTotp({ code: totp });
+    if (error) {
+      setError(error.message ?? "Invalid code.");
+      return;
+    }
+    onDone();
+  }
+
+  async function handleGoogle() {
+    setError("");
+    await signIn.social({ provider: "google", callbackURL: "http://localhost:5173" });
   }
 
   async function handleForgot(e: React.FormEvent) {
@@ -37,6 +60,19 @@ export default function Login({ onDone }: { onDone: () => void }) {
     <>
       <h2>Welcome back</h2>
       <p className="muted">Sign in to your One Link studio.</p>
+      {needTotp && (
+        <form onSubmit={handleTotp} style={{ marginBottom: 12 }}>
+          <label>
+            Two-factor code
+            <input required inputMode="numeric" value={totp} onChange={(e) => setTotp(e.target.value)} placeholder="123456" />
+          </label>
+          <div className="row">
+            <button className="btn btn-dark" type="submit">
+              Verify
+            </button>
+          </div>
+        </form>
+      )}
       <form onSubmit={handleSubmit}>
         <label>
           Email
@@ -65,6 +101,9 @@ export default function Login({ onDone }: { onDone: () => void }) {
           </button>
           <button className="btn" type="button" onClick={() => setShowForgot((v) => !v)}>
             Forgot password?
+          </button>
+          <button className="btn" type="button" onClick={handleGoogle}>
+            Continue with Google
           </button>
         </div>
       </form>

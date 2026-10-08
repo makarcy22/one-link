@@ -1,17 +1,30 @@
 import { betterAuth } from "better-auth";
+import { twoFactor } from "better-auth/plugins";
 import { pool } from "./db.js";
 import { sendEmail } from "./email.js";
 
 const googleConfigured =
   Boolean(process.env.GOOGLE_CLIENT_ID) && Boolean(process.env.GOOGLE_CLIENT_SECRET);
 
+async function audit(userId: string, event: string) {
+  await pool
+    .query("INSERT INTO auth_events (user_id, event) VALUES ($1,$2)", [userId, event])
+    .catch((e) => console.error("[audit]", e instanceof Error ? e.message : e));
+}
+
 export const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   trustedOrigins: [process.env.CLIENT_ORIGIN ?? "http://localhost:5173"],
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+  },
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+    requireEmailVerification: true,
+    minPasswordLength: 10,
     sendResetPassword: async ({ user, url }) => {
       await sendEmail(
         user.email,
@@ -27,6 +40,28 @@ export const auth = betterAuth({
         "Verify your One Link email",
         `<p>Welcome to One Link! Confirm your email to secure your account.</p><p><a href="${url}">Verify email</a></p>`
       );
+    },
+  },
+  plugins: [twoFactor()],
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          await audit(user.id, "signup");
+        },
+      },
+    },
+    session: {
+      create: {
+        after: async (session) => {
+          await audit(session.userId, "signin");
+        },
+      },
+      delete: {
+        after: async (session) => {
+          await audit(session.userId, "signout");
+        },
+      },
     },
   },
   ...(googleConfigured
