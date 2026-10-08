@@ -57,7 +57,7 @@ export async function describeDatabase() {
       const tables = await client.query(
         "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename IN ('user','session','account','verification') ORDER BY tablename"
       );
-      const opts = pool.options as Record<string, unknown>;
+      const opts = pool.options as unknown as Record<string, unknown>;
       return {
         reachable: true,
         error: "",
@@ -77,7 +77,7 @@ export async function describeDatabase() {
       client.release();
     }
   } catch (e) {
-    const opts = pool.options as Record<string, unknown>;
+    const opts = pool.options as unknown as Record<string, unknown>;
     return {
       reachable: false,
       error: e instanceof Error ? e.message : String(e),

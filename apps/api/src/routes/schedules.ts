@@ -1,11 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { Queue } from "bullmq";
-import IORedis from "ioredis";
+import { Redis } from "ioredis";
 import { pool } from "../db.js";
 import { requireUser } from "../session.js";
 import { platformMode } from "../connectors.js";
 
-const connection = new IORedis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
 const publishingQueue = new Queue("publishing", { connection });

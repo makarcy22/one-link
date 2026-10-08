@@ -37,8 +37,13 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
   }
 
   async function resendVerification() {
+    const email = session?.user.email;
+    if (!email) {
+      setVerifyNote("Sign in first, then resend.");
+      return;
+    }
     setVerifyNote("Sending…");
-    const { error } = await authClient.sendVerificationEmail();
+    const { error } = await authClient.sendVerificationEmail({ email });
     setVerifyNote(error ? error.message ?? "Send failed." : "Verification email sent — check your inbox.");
   }
 

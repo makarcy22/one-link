@@ -1,10 +1,10 @@
 import "./env.js";
 import { Worker } from "bullmq";
-import IORedis from "ioredis";
+import { Redis } from "ioredis";
 import { Pool } from "pg";
-import { mockPublish } from "../../api/src/connectors.js";
+import { mockPublish } from "./mock.js";
 
-const connection = new IORedis(process.env.REDIS_URL ?? "redis://localhost:6379", {
+const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
   maxRetriesPerRequest: null,
 });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
