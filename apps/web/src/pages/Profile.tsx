@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
-import { authClient, useSession } from "../auth/auth-client";
+import { authClient, twoFactor, useSession } from "../auth/auth-client";
 import type { Section } from "../lib/sections";
 
 interface Brand {
@@ -19,6 +19,11 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
   const [status, setStatus] = useState("Loading…");
   const [connectNote, setConnectNote] = useState("");
   const [verifyNote, setVerifyNote] = useState("");
+  const [tfPassword, setTfPassword] = useState("");
+  const [totpUri, setTotpUri] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [tfCode, setTfCode] = useState("");
+  const [tfMsg, setTfMsg] = useState("");
   const [conns, setConns] = useState<
     { platform: string; account_name: string; status: string; expires_at: string | null }[]
   >([]);
