@@ -55,8 +55,7 @@ fastify.route({
 
 fastify.get("/api/health", async () => {
   const database = await checkDatabase().catch(() => false);
-  const detail = await describeDatabase();
-  return { ok: true, database, detail };
+  return { ok: true, database };
 });
 
 fastify.get("/api/me", async (request, reply) => {
