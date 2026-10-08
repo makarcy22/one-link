@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { pool } from "./db.js";
+import { sendEmail } from "./email.js";
 
 const googleConfigured =
   Boolean(process.env.GOOGLE_CLIENT_ID) && Boolean(process.env.GOOGLE_CLIENT_SECRET);
@@ -11,10 +12,21 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
-    // Development only: print reset links to the server console.
-    // Production will use a real email provider (see Phase 3 notes).
     sendResetPassword: async ({ user, url }) => {
-      console.log(`[dev] password reset for ${user.email}: ${url}`);
+      await sendEmail(
+        user.email,
+        "Reset your One Link password",
+        `<p>Click the link below to reset your password. It expires soon.</p><p><a href="${url}">Reset password</a></p>`
+      );
+    },
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail(
+        user.email,
+        "Verify your One Link email",
+        `<p>Welcome to One Link! Confirm your email to secure your account.</p><p><a href="${url}">Verify email</a></p>`
+      );
     },
   },
   ...(googleConfigured

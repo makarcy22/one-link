@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { signIn } from "../auth/auth-client";
+import { authClient, signIn } from "../auth/auth-client";
 
 export default function Login({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotMsg, setForgotMsg] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -18,6 +21,16 @@ export default function Login({ onDone }: { onDone: () => void }) {
       return;
     }
     onDone();
+  }
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setForgotMsg("Sending…");
+    const { error } = await authClient.requestPasswordReset({
+      email: forgotEmail,
+      redirectTo: "http://localhost:5173",
+    });
+    setForgotMsg(error ? error.message ?? "Request failed." : "Reset link sent — check your inbox.");
   }
 
   return (
@@ -50,8 +63,25 @@ export default function Login({ onDone }: { onDone: () => void }) {
           <button className="btn btn-dark" type="submit" disabled={busy}>
             {busy ? "Signing in…" : "Sign in"}
           </button>
+          <button className="btn" type="button" onClick={() => setShowForgot((v) => !v)}>
+            Forgot password?
+          </button>
         </div>
       </form>
+      {showForgot && (
+        <form onSubmit={handleForgot} style={{ marginTop: 12 }}>
+          <label>
+            Account email
+            <input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} />
+          </label>
+          {forgotMsg && <p className="muted">{forgotMsg}</p>}
+          <div className="row">
+            <button className="btn btn-dark" type="submit">
+              Send reset link
+            </button>
+          </div>
+        </form>
+      )}
     </>
   );
 }

@@ -13,6 +13,7 @@ import { trendRoutes } from "./routes/trends.js";
 import { scheduleRoutes } from "./routes/schedules.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { aiRoutes } from "./routes/ai.js";
+import { socialRoutes } from "./social/routes.js";
 
 const PORT = 3000;
 const fastify = Fastify({ logger: true });
@@ -76,6 +77,7 @@ await fastify.register(trendRoutes);
 await fastify.register(scheduleRoutes);
 await fastify.register(analyticsRoutes);
 await fastify.register(aiRoutes);
+await fastify.register(socialRoutes);
 
 try {
   await fastify.listen({ port: PORT });

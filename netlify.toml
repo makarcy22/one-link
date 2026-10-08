@@ -1,0 +1,16 @@
+# Netlify deploys the One Link frontend (apps/web).
+# Set VITE_API_URL in the Netlify UI to your deployed API URL.
+
+[build]
+  base = "."
+  command = "npm install && npm run build --workspace @one-link/web"
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# SPA fallback so deep links always serve the app shell.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

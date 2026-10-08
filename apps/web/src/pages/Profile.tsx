@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
+import { authClient, useSession } from "../auth/auth-client";
 import type { Section } from "../lib/sections";
 
 interface Brand {
@@ -17,7 +18,29 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
   const [brand, setBrand] = useState<Brand>(EMPTY);
   const [status, setStatus] = useState("Loading…");
   const [connectNote, setConnectNote] = useState("");
+  const [verifyNote, setVerifyNote] = useState("");
+  const [conns, setConns] = useState<
+    { platform: string; account_name: string; status: string; expires_at: string | null }[]
+  >([]);
+  const [config, setConfig] = useState<Record<string, boolean>>({});
   const nameRef = useRef<HTMLInputElement>(null);
+  const { data: session } = useSession();
+
+  async function loadSocial() {
+    try {
+      const [c, list] = await Promise.all([api.get("/api/social/config"), api.get("/api/social")]);
+      setConfig(c);
+      setConns(list);
+    } catch {
+      setConns([]);
+    }
+  }
+
+  async function resendVerification() {
+    setVerifyNote("Sending…");
+    const { error } = await authClient.sendVerificationEmail();
+    setVerifyNote(error ? error.message ?? "Send failed." : "Verification email sent — check your inbox.");
+  }
 
   useEffect(() => {
     api
@@ -27,6 +50,7 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
         setStatus("");
       })
       .catch(() => setStatus("Could not reach the API — is it running?"));
+    loadSocial();
   }, []);
 
   async function save() {
@@ -96,10 +120,68 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
         </button>
       </div>
       {connectNote && <p className="muted">{connectNote}</p>}
+      <div className="card">
+        <h3>Email verification</h3>
+        <p>
+          Status:{" "}
+          <strong>{session?.user.emailVerified ? "Verified" : "Not verified"}</strong>
+        </p>
+        {!session?.user.emailVerified && (
+          <div className="row">
+            <button className="btn btn-dark" onClick={resendVerification}>
+              Resend verification email
+            </button>
+          </div>
+        )}
+        {verifyNote && <p className="muted">{verifyNote}</p>}
+      </div>
       <div className="grid">
         <div className="card">
           <h3>Connected accounts</h3>
-          <p>TikTok · Instagram · Facebook · LinkedIn (connectors arrive in review pass).</p>
+          {["tiktok", "instagram", "facebook", "linkedin"].map((p) => {
+            const conn = conns.find((c) => c.platform === p);
+            const ready = config[p];
+            return (
+              <p key={p}>
+                <strong style={{ textTransform: "capitalize" }}>{p}</strong>:{" "}
+                {conn ? `${conn.account_name} · ${conn.status}` : "not connected"}{" "}
+                {conn ? (
+                  <>
+                    <button
+                      className="btn"
+                      onClick={async () => {
+                        await api.del(`/api/social/${p}`).catch(() => {});
+                        await loadSocial();
+                      }}
+                    >
+                      Disconnect
+                    </button>{" "}
+                    <button
+                      className="btn"
+                      onClick={async () => {
+                        const res = await api.post(`/api/social/${p}/refresh`, {}).catch((e) => e);
+                        setConnectNote(res?.ok ? "Tokens refreshed." : String(res?.message || res));
+                        await loadSocial();
+                      }}
+                    >
+                      Refresh
+                    </button>
+                  </>
+                ) : ready ? (
+                  <button
+                    className="btn btn-dark"
+                    onClick={() => {
+                      window.location.href = `http://localhost:3000/api/social/${p}/connect`;
+                    }}
+                  >
+                    Connect
+                  </button>
+                ) : (
+                  <span className="muted">keys needed — see docs/social-connectors.md</span>
+                )}
+              </p>
+            );
+          })}
         </div>
         <div className="card">
           <h3>Saved assets</h3>
