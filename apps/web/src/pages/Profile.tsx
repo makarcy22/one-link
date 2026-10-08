@@ -63,6 +63,36 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
     loadSocial();
   }, []);
 
+  async function enable2fa() {
+    setTfMsg("Enabling…");
+    const { data, error } = await twoFactor.enable({ password: tfPassword });
+    if (error) {
+      setTfMsg(error.message ?? "Enable failed.");
+      return;
+    }
+    if (data && data.method === "totp") {
+      setTotpUri(data.totpURI);
+      setBackupCodes(data.backupCodes);
+      setTfMsg("Scan the URI below in your authenticator app (Google Authenticator, Authy, 1Password), then verify a code.");
+    } else {
+      setTfMsg(`Enabled with method: ${data?.method ?? "unknown"}.`);
+    }
+  }
+
+  async function verify2fa() {
+    const { error } = await twoFactor.verifyTotp({ code: tfCode });
+    setTfMsg(error ? error.message ?? "Invalid code." : "Two-factor enabled for your account.");
+  }
+
+  async function disable2fa() {
+    const { error } = await twoFactor.disable({ password: tfPassword });
+    setTfMsg(error ? error.message ?? "Disable failed." : "Two-factor disabled.");
+    if (!error) {
+      setTotpUri("");
+      setBackupCodes([]);
+    }
+  }
+
   async function save() {
     setStatus("Saving…");
     try {
@@ -144,6 +174,49 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
           </div>
         )}
         {verifyNote && <p className="muted">{verifyNote}</p>}
+      </div>
+      <div className="card">
+        <h3>Two-factor authentication</h3>
+        <p>
+          Status:{" "}
+          <strong>
+            {String((session?.user as unknown as Record<string, unknown>)?.twoFactorEnabled ?? "unknown")}
+          </strong>
+        </p>
+        <label>
+          Account password (to confirm changes)
+          <input
+            type="password"
+            value={tfPassword}
+            onChange={(e) => setTfPassword(e.target.value)}
+          />
+        </label>
+        <div className="row">
+          <button className="btn btn-dark" onClick={enable2fa}>
+            Enable 2FA
+          </button>
+          <button className="btn" onClick={disable2fa}>
+            Disable 2FA
+          </button>
+        </div>
+        {totpUri && (
+          <>
+            <p style={{ wordBreak: "break-all" }}>{totpUri}</p>
+            {backupCodes.length > 0 && (
+              <p>Backup codes (save these somewhere safe): {backupCodes.join(", ")}</p>
+            )}
+            <label>
+              6-digit code from your app
+              <input value={tfCode} onChange={(e) => setTfCode(e.target.value)} placeholder="123456" />
+            </label>
+            <div className="row">
+              <button className="btn btn-dark" onClick={verify2fa}>
+                Verify and finish
+              </button>
+            </div>
+          </>
+        )}
+        {tfMsg && <p className="muted">{tfMsg}</p>}
       </div>
       <div className="grid">
         <div className="card">
