@@ -11,6 +11,21 @@ Target layout:
 Netlify cannot host the API, worker, Postgres, or Redis — it serves static
 sites and short-lived functions only. That is why the app is split this way.
 
+## Auto-deploy (recommended: connect once, ship forever)
+
+Both Netlify and Render deploy **automatically on every push to `main`**:
+
+1. You `git push` → GitHub notifies both services.
+2. Each rebuilds from the repo and goes live in 1–3 minutes. No manual steps.
+3. Every pull request also gets its own **preview URL** (Netlify) — send these
+   to testers to try features before they reach the main site.
+4. If a deploy breaks something, roll back in one click from either dashboard
+   (Netlify: Deploys → Publish deploy; Render: manual deploy of an older commit).
+
+Safety net: `.github/workflows/ci.yml` typechecks and builds **all**
+workspaces on every push and pull request (`npm run build:all`). A red check
+means "do not deploy this" — fix first, then push again.
+
 ## 1. Deploy the frontend to Netlify
 
 1. Push the repo to GitHub (commit the new `netlify.toml` first).
