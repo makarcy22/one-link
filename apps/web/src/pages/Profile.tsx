@@ -24,6 +24,27 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [tfCode, setTfCode] = useState("");
   const [tfMsg, setTfMsg] = useState("");
+  const [sub, setSub] = useState<{ plan: string; used: number; limit: number } | null>(null);
+  const [subMsg, setSubMsg] = useState("");
+
+  async function loadSub() {
+    try {
+      setSub(await api.get("/api/billing/status"));
+    } catch {
+      setSub(null);
+    }
+  }
+
+  async function checkout(plan: string) {
+    setSubMsg("Opening checkout…");
+    try {
+      const res = await api.post("/api/billing/checkout", { plan });
+      if (res.authorization_url) window.location.href = res.authorization_url as string;
+      else setSubMsg("Checkout failed — billing keys may be missing. See docs/payments.md.");
+    } catch {
+      setSubMsg("Checkout failed — billing keys may be missing. See docs/payments.md.");
+    }
+  }
   const [conns, setConns] = useState<
     { platform: string; account_name: string; status: string; expires_at: string | null }[]
   >([]);
@@ -61,6 +82,7 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
       })
       .catch(() => setStatus("Could not reach the API — is it running?"));
     loadSocial();
+    loadSub();
   }, []);
 
   async function enable2fa() {
@@ -174,6 +196,26 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
           </div>
         )}
         {verifyNote && <p className="muted">{verifyNote}</p>}
+      </div>
+      <div className="card">
+        <h3>Subscription</h3>
+        {sub ? (
+          <p>
+            Plan: <strong style={{ textTransform: "capitalize" }}>{sub.plan}</strong> · AI
+            usage this month: {sub.used}/{sub.limit}
+          </p>
+        ) : (
+          <p>Sign in to see your plan.</p>
+        )}
+        <div className="row">
+          <button className="btn btn-dark" onClick={() => checkout("creator")}>
+            Upgrade to Creator
+          </button>
+          <button className="btn btn-dark" onClick={() => checkout("business")}>
+            Upgrade to Business
+          </button>
+        </div>
+        {subMsg && <p className="muted">{subMsg}</p>}
       </div>
       <div className="card">
         <h3>Two-factor authentication</h3>

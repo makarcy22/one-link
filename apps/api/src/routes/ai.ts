@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { pool } from "../db.js";
 import { requireUser } from "../session.js";
+import { checkAiQuota } from "../billing.js";
 import { groqChat, groqConfigured } from "../ai-provider.js";
 
 // Template engine: zero-key fallback so every phase stays testable.
@@ -62,6 +63,12 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post("/api/ai/caption", async (req, reply) => {
     const s = await requireUser(req, reply);
     if (!s) return;
+    const quota = await checkAiQuota(s.user.id);
+    if (!quota.ok) {
+      return reply.status(402).send({
+        error: `Monthly AI limit reached (${quota.used}/${quota.limit} on the ${quota.plan} plan). Upgrade your plan to continue.`,
+      });
+    }
     const b = (req.body ?? {}) as Record<string, string>;
     const text = b.text || "my new post";
     const tone = b.tone || "Casual";

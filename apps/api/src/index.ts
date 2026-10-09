@@ -13,6 +13,7 @@ import { trendRoutes } from "./routes/trends.js";
 import { scheduleRoutes } from "./routes/schedules.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { aiRoutes } from "./routes/ai.js";
+import { billingRoutes } from "./routes/billing.js";
 import { socialRoutes } from "./social/routes.js";
 
 const PORT = 3000;
@@ -28,6 +29,17 @@ await fastify.register(fastifyCors, {
 
 await fastify.register(multipart, {
   limits: { fileSize: 100 * 1024 * 1024 },
+});
+
+// Keep the raw JSON body for HMAC webhook verification (billing),
+// while still parsing it normally for every other route.
+fastify.addContentTypeParser("application/json", { parseAs: "string" }, (req, body, done) => {
+  (req as unknown as Record<string, unknown>).rawBody = body;
+  try {
+    done(null, JSON.parse(body as string));
+  } catch (err) {
+    done(err as Error);
+  }
 });
 
 fastify.route({
@@ -76,6 +88,7 @@ await fastify.register(trendRoutes);
 await fastify.register(scheduleRoutes);
 await fastify.register(analyticsRoutes);
 await fastify.register(aiRoutes);
+await fastify.register(billingRoutes);
 await fastify.register(socialRoutes);
 
 try {
