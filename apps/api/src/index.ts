@@ -16,7 +16,6 @@ import { aiRoutes } from "./routes/ai.js";
 import { billingRoutes } from "./routes/billing.js";
 import { socialRoutes } from "./social/routes.js";
 
-const PORT = 3000;
 const fastify = Fastify({ logger: true });
 
 await fastify.register(fastifyCors, {
@@ -92,8 +91,10 @@ await fastify.register(billingRoutes);
 await fastify.register(socialRoutes);
 
 try {
-  await fastify.listen({ port: PORT });
-  console.log(`One Link API running on http://localhost:${PORT}`);
+  // Render (and most hosts) inject PORT and require binding 0.0.0.0.
+  const port = Number(process.env.PORT ?? 3000);
+  await fastify.listen({ port, host: "0.0.0.0" });
+  console.log(`One Link API running on port ${port}`);
 } catch (err) {
   fastify.log.error(err);
   process.exit(1);
