@@ -2,9 +2,9 @@
 # Set VITE_API_URL in the Netlify UI to your deployed API URL.
 
 [build]
-  base = "."
-  command = "npm install && npm run build --workspace @one-link/web"
-  publish = "apps/web/dist"
+  base = "apps/web"
+  command = "npm install && npm run build"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
