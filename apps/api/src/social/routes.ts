@@ -4,7 +4,7 @@ import { pool } from "../db.js";
 import { redis } from "../redis.js";
 import { requireUser } from "../session.js";
 import { decryptToken, encryptToken } from "../crypto.js";
-import { PLATFORMS } from "./platforms.js";
+import { PLATFORMS, pkcePair } from "./platforms.js";
 
 function redirectUri(key: string): string {
   return `${process.env.BETTER_AUTH_URL ?? "http://localhost:3000"}/api/social/${key}/callback`;
@@ -37,9 +37,16 @@ export async function socialRoutes(app: FastifyInstance) {
         error: `${def.label} is not configured. Add its credentials to .env — see docs/social-connectors.md.`,
       });
     }
+    const pair = platform === "x" ? pkcePair() : null;
     const state = randomUUID();
-    await redis.setex(`oauth:${state}`, 600, JSON.stringify({ userId: s.user.id, platform }));
-    return reply.redirect(def.authorizeUrl(state));
+    await redis.setex(
+      `oauth:${state}`,
+      600,
+      JSON.stringify({ userId: s.user.id, platform, verifier: pair?.verifier ?? "" })
+    );
+    return reply.redirect(
+      def.authorizeUrl(state, pair ? { challenge: pair.challenge } : undefined)
+    );
   });
 
   app.get("/api/social/:platform/callback", async (req, reply) => {
@@ -50,9 +57,9 @@ export async function socialRoutes(app: FastifyInstance) {
     const def = PLATFORMS[platform];
     const saved = await redis.getdel(`oauth:${state}`);
     if (!def || !saved) return reply.redirect(`${home}?social=error`);
-    const { userId } = JSON.parse(saved) as { userId: string };
+    const { userId, verifier } = JSON.parse(saved) as { userId: string; verifier?: string };
     try {
-      const tokens = await def.exchange(code, redirectUri(platform));
+      const tokens = await def.exchange(code, redirectUri(platform), { verifier });
       const expiresAt = tokens.expires_in
         ? new Date(Date.now() + tokens.expires_in * 1000).toISOString()
         : null;

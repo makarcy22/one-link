@@ -263,7 +263,7 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
       <div className="grid">
         <div className="card">
           <h3>Connected accounts</h3>
-          {["tiktok", "instagram", "facebook", "linkedin"].map((p) => {
+          {["tiktok", "instagram", "facebook", "linkedin", "x"].map((p) => {
             const conn = conns.find((c) => c.platform === p);
             const ready = config[p];
             return (

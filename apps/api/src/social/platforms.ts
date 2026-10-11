@@ -15,8 +15,8 @@ export interface PlatformDef {
   key: string;
   label: string;
   configured(): boolean;
-  authorizeUrl(state: string): string;
-  exchange(code: string, redirectUri: string): Promise<TokenSet>;
+  authorizeUrl(state: string, extra?: { challenge?: string }): string;
+  exchange(code: string, redirectUri: string, extra?: { verifier?: string }): Promise<TokenSet>;
   refresh(refreshToken: string): Promise<TokenSet>;
 }
 
@@ -196,9 +196,96 @@ const linkedin: PlatformDef = {
   },
 };
 
+import { createHash, randomBytes } from "node:crypto";
+
+// PKCE pair (required by X OAuth 2.0). Verifier travels in the Redis
+// state record; only the challenge goes over the browser redirect.
+export function pkcePair(): { verifier: string; challenge: string } {
+  const verifier = randomBytes(32).toString("base64url");
+  const challenge = createHash("sha256").update(verifier).digest("base64url");
+  return { verifier, challenge };
+}
+
+const X_SCOPES = "tweet.read tweet.write users.read offline.access";
+
+function xBasic(): string {
+  return Buffer.from(
+    `${process.env.X_CLIENT_ID ?? ""}:${process.env.X_CLIENT_SECRET ?? ""}`
+  ).toString("base64");
+}
+
+const x: PlatformDef = {
+  key: "x",
+  label: "X",
+  configured: () => Boolean(process.env.X_CLIENT_ID && process.env.X_CLIENT_SECRET),
+  authorizeUrl: (state, extra) =>
+    `https://twitter.com/i/oauth2/authorize?${new URLSearchParams({
+      response_type: "code",
+      client_id: process.env.X_CLIENT_ID ?? "",
+      redirect_uri: redirectUri("x"),
+      scope: X_SCOPES,
+      state,
+      code_challenge: extra?.challenge ?? "",
+      code_challenge_method: "S256",
+    })}`,
+  exchange: async (code, redirect, extra) => {
+    const res = await fetch("https://api.twitter.com/2/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${xBasic()}`,
+      },
+      body: new URLSearchParams({
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: redirect,
+        code_verifier: extra?.verifier ?? "",
+      }),
+    });
+    const b = await asJson(res);
+    return {
+      access_token: String(b.access_token ?? ""),
+      refresh_token: b.refresh_token ? String(b.refresh_token) : undefined,
+      expires_in: Number(b.expires_in ?? 0),
+      account_name: "X account",
+      scopes: X_SCOPES,
+    };
+  },
+  refresh: async (refreshToken) => {
+    const res = await fetch("https://api.twitter.com/2/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${xBasic()}`,
+      },
+      body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: refreshToken }),
+    });
+    const b = await asJson(res);
+    return {
+      access_token: String(b.access_token ?? ""),
+      refresh_token: b.refresh_token ? String(b.refresh_token) : refreshToken,
+      expires_in: Number(b.expires_in ?? 0),
+    };
+  },
+};
+
+// Real X posting call (text posts). Media upload is a separate multi-step flow,
+// added when video/image posting is required. Needs an X API tier with write access.
+export async function postToX(accessToken: string, text: string): Promise<string> {
+  const res = await fetch("https://api.twitter.com/2/tweets", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  const b = await asJson(res);
+  const data = b.data as Record<string, unknown> | undefined;
+  return String(data?.id ?? "");
+}
+
 export const PLATFORMS: Record<string, PlatformDef> = {
   tiktok,
   facebook: metaDef("facebook", "Facebook"),
   instagram: metaDef("instagram", "Instagram"),
   linkedin,
+  x,
 };

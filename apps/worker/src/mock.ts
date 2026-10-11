@@ -8,7 +8,7 @@ export interface PublishResult {
 }
 
 export function platformMode(platform: string): "direct" | "manual" {
-  const direct = ["tiktok", "instagram", "facebook", "linkedin"];
+  const direct = ["tiktok", "instagram", "facebook", "linkedin", "x"];
   return direct.includes(platform.toLowerCase()) ? "direct" : "manual";
 }
 

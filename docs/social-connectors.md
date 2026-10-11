@@ -44,6 +44,29 @@ attempt fails with a clear error instead of storing anything insecurely.
 3. Approve access on the platform's site — you return with the account linked.
 4. **Refresh** re-issues tokens where the platform supports it; otherwise reconnect.
 
+## Step 3b: X (Twitter)
+
+1. Create an app at the X Developer portal, enable **OAuth 2.0** (type: web app).
+2. Register the redirect URI: `http://localhost:3000/api/social/x/callback`
+3. Request scopes: `tweet.read tweet.write users.read offline.access`.
+4. Copy the Client ID and Client Secret into `.env` as `X_CLIENT_ID` / `X_CLIENT_SECRET`.
+5. Pricing honesty: posting requires an X API tier with **write access** — free
+   tiers are read-heavy, so check current X pricing before promising auto-posting.
+   Connection + token refresh work on any tier; the `postToX` call needs write.
+6. Text posting is implemented (`postToX`); media upload (multi-step) lands when
+   video/image posting is required.
+
+## Step 3c: WhatsApp Status (honest design, not an API)
+
+There is **no API for posting WhatsApp Status** — Meta's WhatsApp API covers
+chat/template messaging only. One Link therefore treats WhatsApp as
+manual/export by design:
+
+1. Planner marks WhatsApp jobs for manual completion (never fake-success).
+2. Each WhatsApp schedule shows a **Share to WhatsApp** button opening a
+   `wa.me` deep link with the post text prefilled.
+3. The user finishes inside WhatsApp — Status tab or any chat.
+
 ## Production notes (review pass)
 
 - Replace `localhost` redirect URIs with your public API domain everywhere (provider consoles + `.env`).

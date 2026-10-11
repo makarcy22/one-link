@@ -23,7 +23,7 @@ interface Job {
   last_error: string;
 }
 
-const PLATFORMS = ["tiktok", "instagram", "facebook", "linkedin", "whatsapp"];
+const PLATFORMS = ["tiktok", "instagram", "facebook", "linkedin", "whatsapp", "x"];
 
 export default function Planner({ go }: { go: (s: Section) => void }) {
   void go;
@@ -143,6 +143,18 @@ export default function Planner({ go }: { go: (s: Section) => void }) {
               <button className="btn btn-dark" onClick={() => publishNow(s.id)}>
                 Publish now
               </button>
+              {JSON.parse(s.platforms || "[]").includes("whatsapp") && (
+                <a
+                  className="btn"
+                  target="_blank"
+                  rel="noreferrer"
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    `${s.project_title || "My new post"} — via One Link`
+                  )}`}
+                >
+                  Share to WhatsApp
+                </a>
+              )}
             </div>
           </div>
         ))}

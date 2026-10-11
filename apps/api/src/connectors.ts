@@ -15,6 +15,7 @@ const MODES: Record<string, PlatformMode> = {
   instagram: "direct",
   facebook: "direct",
   linkedin: "direct",
+  x: "direct",
   whatsapp: "manual",
 };
 
