@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import Home from "./pages/Home";
 import Create from "./pages/Create";
@@ -14,6 +14,11 @@ import { SECTIONS } from "./lib/sections";
 import type { Section } from "./lib/sections";
 import { signOut, useSession } from "./auth/auth-client";
 import "./styles.css";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
 
 const PAGES: Record<Section, ComponentType<{ go: (s: Section) => void }>> = {
   Home,
@@ -31,7 +36,25 @@ type AuthView = "signin" | "signup" | null;
 export default function App() {
   const [section, setSection] = useState<Section>("Home");
   const [authView, setAuthView] = useState<AuthView>(null);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const { data: session, isPending } = useSession();
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  async function installApp() {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  }
 
   function openSection(s: Section) {
     setSection(s);
@@ -56,6 +79,11 @@ export default function App() {
           </button>
         ))}
         <div style={{ marginTop: "auto", paddingTop: 12 }}>
+          {installPrompt && (
+            <button className="nav-item" onClick={installApp}>
+              Install app
+            </button>
+          )}
           {isPending ? (
             <p style={{ color: "#cbd5e1", fontSize: 13 }}>Checking session…</p>
           ) : session ? (

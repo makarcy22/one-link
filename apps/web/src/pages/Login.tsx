@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { authClient, signIn, twoFactor } from "../auth/auth-client";
+import { WEB_ORIGIN } from "../lib/backend";
 
 export default function Login({ onDone }: { onDone: () => void }) {
   const [email, setEmail] = useState("");
@@ -51,7 +52,7 @@ export default function Login({ onDone }: { onDone: () => void }) {
     setForgotMsg("Sending…");
     const { error } = await authClient.requestPasswordReset({
       email: forgotEmail,
-      redirectTo: "http://localhost:5173",
+      redirectTo: WEB_ORIGIN,
     });
     setForgotMsg(error ? error.message ?? "Request failed." : "Reset link sent — check your inbox.");
   }
