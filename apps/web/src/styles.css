@@ -81,11 +81,43 @@ body {
 }
 
 .hero-strip {
-  background: var(--hero);
+  background: linear-gradient(135deg, #ff7a1a 0%, #ff5a1f 30%, #111827 100%);
   color: #ffffff;
   border-radius: var(--radius);
   padding: 22px;
   margin-bottom: 18px;
+  box-shadow: 0 18px 38px rgba(255, 90, 31, 0.24);
+}
+
+.creator-hero {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.creator-hero-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+
+.signal-pill {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
 }
 
 .hero-strip h1 {
@@ -96,6 +128,54 @@ body {
 .hero-strip p {
   margin: 0;
   opacity: 0.95;
+}
+
+.platform-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 18px;
+}
+
+.platform-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(17, 24, 39, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.mini-stat {
+  background: rgba(15, 23, 42, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mini-stat span {
+  opacity: 0.8;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.mini-stat strong {
+  font-size: 20px;
+  line-height: 1.2;
 }
 
 .grid {
@@ -112,9 +192,37 @@ body {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
+.creator-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fff7f3 100%);
+  border: 1px solid rgba(255, 90, 31, 0.12);
+}
+
 .card h3 {
   margin: 0 0 8px;
   font-size: 16px;
+}
+
+.stat-stack {
+  margin: 14px 0 10px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #fff1eb;
+  border: 1px solid rgba(255, 90, 31, 0.12);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.stat-stack span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.stat-stack strong {
+  font-size: 18px;
+  color: var(--ink);
 }
 
 .card p,

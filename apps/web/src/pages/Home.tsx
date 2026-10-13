@@ -173,9 +173,22 @@ export default function Home({ go }: { go: (s: Section) => void }) {
   if (!session) {
     return (
       <>
-        <div className="hero-strip">
-          <h1>Welcome to One Link Studio</h1>
+        <div className="hero-strip creator-hero">
+          <div className="creator-hero-head">
+            <div>
+              <span className="eyebrow">Creator engine</span>
+              <h1>Welcome to One Link Studio</h1>
+            </div>
+            <div className="signal-pill">Live</div>
+          </div>
           <p>Create once. Reach everywhere. Your whole social workflow lives here.</p>
+          <div className="platform-row">
+            {['TikTok', 'Instagram', 'LinkedIn', 'X', 'Facebook'].map((platform) => (
+              <span key={platform} className="platform-tag">
+                {platform}
+              </span>
+            ))}
+          </div>
           {!mode ? (
             <div className="row">
               <button className="btn btn-dark" onClick={() => setMode("signup")}>
@@ -232,27 +245,39 @@ export default function Home({ go }: { go: (s: Section) => void }) {
         <Trailer replayKey={replay} onReplay={() => setReplay((r) => r + 1)} />
 
         <div className="grid">
-          <div className="card">
+          <div className="card creator-card">
             <h3>Create</h3>
             <p>Video, graphics, writing, and audio in one studio.</p>
+            <div className="stat-stack">
+              <span>12 ideas</span>
+              <strong>Ready</strong>
+            </div>
             <div className="row">
               <button className="btn btn-dark" onClick={() => setMode("signup")}>
                 Try it free
               </button>
             </div>
           </div>
-          <div className="card">
+          <div className="card creator-card">
             <h3>Publish everywhere</h3>
             <p>One post adapted for every platform, scheduled in one click.</p>
+            <div className="stat-stack">
+              <span>5 networks</span>
+              <strong>Connected</strong>
+            </div>
             <div className="row">
               <button className="btn btn-dark" onClick={() => setMode("signup")}>
                 Try it free
               </button>
             </div>
           </div>
-          <div className="card">
+          <div className="card creator-card">
             <h3>Understand growth</h3>
             <p>One dashboard, plain-language coaching, next-idea tips.</p>
+            <div className="stat-stack">
+              <span>+28%</span>
+              <strong>Engagement</strong>
+            </div>
             <div className="row">
               <button className="btn btn-dark" onClick={() => setMode("signup")}>
                 Try it free
@@ -267,15 +292,35 @@ export default function Home({ go }: { go: (s: Section) => void }) {
   const firstName = session.user.name?.split(" ")[0] || "creator";
   return (
     <>
-      <div className="hero-strip">
-        <h1>
-          {greeting()}, {firstName}
-        </h1>
+      <div className="hero-strip creator-hero">
+        <div className="creator-hero-head">
+          <div>
+            <span className="eyebrow">Creator overview</span>
+            <h1>
+              {greeting()}, {firstName}
+            </h1>
+          </div>
+          <div className="signal-pill">+18%</div>
+        </div>
         <p>
           {counts
             ? `You have ${counts.drafts} draft${counts.drafts === 1 ? "" : "s"} and ${counts.scheduled} scheduled post${counts.scheduled === 1 ? "" : "s"}.`
             : "Your studio is ready — pick what to do next."}
         </p>
+        <div className="stat-row">
+          <div className="mini-stat">
+            <span>Reach</span>
+            <strong>24.2K</strong>
+          </div>
+          <div className="mini-stat">
+            <span>Engagement</span>
+            <strong>7.4%</strong>
+          </div>
+          <div className="mini-stat">
+            <span>Posts</span>
+            <strong>18</strong>
+          </div>
+        </div>
         <div className="row">
           <button className="btn btn-dark" onClick={() => go("Create")}>
             New draft
@@ -295,24 +340,34 @@ export default function Home({ go }: { go: (s: Section) => void }) {
       <Trailer replayKey={replay} onReplay={() => setReplay((r) => r + 1)} />
 
       <div className="grid">
-        <div className="card">
+        <div className="card creator-card">
           <h3>Today</h3>
           <p>2 drafts · 1 scheduled post · 3 trends match your niche.</p>
+          <div className="stat-stack">
+            <span>Priority</span>
+            <strong>Reels</strong>
+          </div>
           <div className="row">
             <button className="btn btn-dark" onClick={() => go("Planner")}>
               Open Planner
             </button>
           </div>
         </div>
-        <div className="card">
+        <div className="card creator-card">
           <h3>Trending now</h3>
-          <span className="chip">#JubaFashion</span>
-          <span className="chip">Hook styles</span>
-          <span className="chip">Sounds</span>
+          <div className="platform-row">
+            <span className="platform-tag">#JubaFashion</span>
+            <span className="platform-tag">Hook styles</span>
+            <span className="platform-tag">Sounds</span>
+          </div>
         </div>
-        <div className="card">
+        <div className="card creator-card">
           <h3>Next recommendation</h3>
           <p>Repurpose your teaser hook into tomorrow's TikTok.</p>
+          <div className="stat-stack">
+            <span>Suggested</span>
+            <strong>Video</strong>
+          </div>
           <div className="row">
             <button className="btn btn-dark" onClick={() => go("Create")}>
               Create This

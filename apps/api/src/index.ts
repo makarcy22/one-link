@@ -17,9 +17,10 @@ import { billingRoutes } from "./routes/billing.js";
 import { socialRoutes } from "./social/routes.js";
 
 const fastify = Fastify({ logger: true });
+const env = process.env as Record<string, string | undefined>;
 
 await fastify.register(fastifyCors, {
-  origin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
+  origin: env.CLIENT_ORIGIN ?? "https://one-link-studio.netlify.app",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,
@@ -92,7 +93,7 @@ await fastify.register(socialRoutes);
 
 try {
   // Render (and most hosts) inject PORT and require binding 0.0.0.0.
-  const port = Number(process.env.PORT ?? 3000);
+  const port = Number(env.PORT ?? 3000);
   await fastify.listen({ port, host: "0.0.0.0" });
   console.log(`One Link API running on port ${port}`);
 } catch (err) {
