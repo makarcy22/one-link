@@ -1,15 +1,5 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { ComponentType } from "react";
-import Home from "./pages/Home";
-import Create from "./pages/Create";
-import Trends from "./pages/Trends";
-import Inspire from "./pages/Inspire";
-import Planner from "./pages/Planner";
-import Analytics from "./pages/Analytics";
-import Assistant from "./pages/Assistant";
-import Profile from "./pages/Profile";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import { SECTIONS } from "./lib/sections";
 import type { Section } from "./lib/sections";
 import { signOut, useSession } from "./auth/auth-client";
@@ -20,16 +10,16 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
-const PAGES: Record<Section, ComponentType<{ go: (s: Section) => void }>> = {
-  Home,
-  Create,
-  Trends,
-  Inspire,
-  Planner,
-  Analytics,
-  Assistant,
-  Profile,
-};
+const PAGES = {
+  Home: lazy(() => import("./pages/Home")),
+  Create: lazy(() => import("./pages/Create")),
+  Trends: lazy(() => import("./pages/Trends")),
+  Inspire: lazy(() => import("./pages/Inspire")),
+  Planner: lazy(() => import("./pages/Planner")),
+  Analytics: lazy(() => import("./pages/Analytics")),
+  Assistant: lazy(() => import("./pages/Assistant")),
+  Profile: lazy(() => import("./pages/Profile")),
+} satisfies Record<Section, ComponentType<{ go: (s: Section) => void }>>;
 
 type AuthView = "signin" | "signup" | null;
 
@@ -119,11 +109,17 @@ export default function App() {
           )}
         </div>
       </aside>
+
       <main className="main">
         {authView === "signin" && <Login onDone={() => openSection("Home")} />}
         {authView === "signup" && <Signup onDone={() => openSection("Home")} />}
-        {!authView && <Page go={openSection} />}
+        {!authView && (
+          <Suspense fallback={<div className="page-loading">Loading…</div>}>
+            <Page go={openSection} />
+          </Suspense>
+        )}
       </main>
+
       <nav className="tabbar">
         {SECTIONS.map((s) => (
           <button
