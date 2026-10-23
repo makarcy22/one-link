@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import { pool } from "../db.js";
 import { requireUser } from "../session.js";
 import { checkAiQuota } from "../billing.js";
@@ -22,6 +22,23 @@ const IDEAS = [
   "Myth vs fact: correct one common misconception in your niche.",
   "Price reveal: announce one offer with a clear call to action.",
 ];
+
+const MAX_INPUT = 2000;
+
+function clip(value: unknown, fallback: string, max = MAX_INPUT): string {
+  const text = typeof value === "string" ? value.trim() : "";
+  return (text || fallback).slice(0, max);
+}
+
+// Every AI route spends the same monthly quota, so every route checks it.
+async function withinQuota(userId: string, reply: FastifyReply): Promise<boolean> {
+  const quota = await checkAiQuota(userId);
+  if (quota.ok) return true;
+  reply.status(402).send({
+    error: `Monthly AI limit reached (${quota.used}/${quota.limit} on the ${quota.plan} plan). Upgrade your plan to continue.`,
+  });
+  return false;
+}
 
 async function record(
   userId: string,
@@ -63,16 +80,11 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post("/api/ai/caption", async (req, reply) => {
     const s = await requireUser(req, reply);
     if (!s) return;
-    const quota = await checkAiQuota(s.user.id);
-    if (!quota.ok) {
-      return reply.status(402).send({
-        error: `Monthly AI limit reached (${quota.used}/${quota.limit} on the ${quota.plan} plan). Upgrade your plan to continue.`,
-      });
-    }
+    if (!(await withinQuota(s.user.id, reply))) return;
     const b = (req.body ?? {}) as Record<string, string>;
-    const text = b.text || "my new post";
-    const tone = b.tone || "Casual";
-    const platform = b.platform || "tiktok";
+    const text = clip(b.text, "my new post");
+    const tone = clip(b.tone, "Casual", 40);
+    const platform = clip(b.platform, "tiktok", 40);
     const voice = await brandVoiceOf(s.user.id, b.brand_id);
 
     if (groqConfigured()) {
@@ -98,8 +110,9 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post("/api/ai/hooks", async (req, reply) => {
     const s = await requireUser(req, reply);
     if (!s) return;
+    if (!(await withinQuota(s.user.id, reply))) return;
     const b = (req.body ?? {}) as Record<string, string>;
-    const topic = b.topic || "starting a business";
+    const topic = clip(b.topic, "starting a business", 300);
 
     if (groqConfigured()) {
       try {
@@ -123,8 +136,9 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post("/api/ai/ideas", async (req, reply) => {
     const s = await requireUser(req, reply);
     if (!s) return;
+    if (!(await withinQuota(s.user.id, reply))) return;
     const b = (req.body ?? {}) as Record<string, string>;
-    const niche = b.niche || "your niche";
+    const niche = clip(b.niche, "your niche", 300);
 
     if (groqConfigured()) {
       try {
@@ -148,8 +162,9 @@ export async function aiRoutes(app: FastifyInstance) {
   app.post("/api/ai/ask", async (req, reply) => {
     const s = await requireUser(req, reply);
     if (!s) return;
+    if (!(await withinQuota(s.user.id, reply))) return;
     const b = (req.body ?? {}) as Record<string, string>;
-    const question = b.question || "";
+    const question = clip(b.question, "", 1000);
 
     if (groqConfigured()) {
       try {

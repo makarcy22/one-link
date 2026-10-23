@@ -2,42 +2,40 @@ import "./env.js";
 import { Worker } from "bullmq";
 import { Redis } from "ioredis";
 import { Pool } from "pg";
-import { mockPublish } from "./mock.js";
+import { finishIfDone, runPublish, runReminder } from "./publish.js";
 
-const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", {
-  maxRetriesPerRequest: null,
-});
+const connection = new Redis(process.env.REDIS_URL ?? "redis://localhost:6379", { maxRetriesPerRequest: null });
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const dryRun = process.env.PUBLISH_DRY_RUN === "true";
 
-new Worker(
+const worker = new Worker(
   "publishing",
   async (job) => {
     const { jobId } = job.data as { jobId: string };
-    await pool.query(
-      "UPDATE publishing_jobs SET status='running', attempts=attempts+1, updated_at=NOW() WHERE id=$1",
-      [jobId]
-    );
-    const found = await pool.query(
-      `SELECT pj.*, sc.platforms FROM publishing_jobs pj
-       JOIN schedules sc ON sc.id = pj.schedule_id WHERE pj.id=$1`,
-      [jobId]
-    );
-    const row = found.rows[0];
-    if (!row) return;
-    const result = await mockPublish(row.platform, `scheduled post ${row.schedule_id}`);
-    await pool.query(
-      "UPDATE publishing_jobs SET status=$1, last_error=$2, external_id=$3, updated_at=NOW() WHERE id=$4",
-      [result.ok ? "completed" : "failed", result.ok ? "" : result.message, result.externalId, jobId]
-    );
-    const pending = await pool.query(
-      "SELECT COUNT(*)::int AS n FROM publishing_jobs WHERE schedule_id=$1 AND status IN ('queued','running')",
-      [row.schedule_id]
-    );
-    if (pending.rows[0].n === 0) {
-      await pool.query("UPDATE schedules SET status='completed' WHERE id=$1", [row.schedule_id]);
-    }
+    if (job.name === "remind") return runReminder(jobId, pool);
+    const maxAttempts = job.opts.attempts ?? 1;
+    return runPublish(jobId, { db: pool, dryRun }, { attempt: job.attemptsMade + 1, maxAttempts });
   },
-  { connection }
+  { connection, concurrency: 5 }
 );
 
-console.log("One Link worker running: publishing queue.");
+worker.on("failed", async (job, err) => {
+  console.error(`[worker] job ${job?.id} failed (attempt ${job?.attemptsMade}): ${err.message}`);
+  // Out of retries: close out the schedule so it does not hang.
+  if (job && job.name === "publish" && job.attemptsMade >= (job.opts.attempts ?? 1)) {
+    const { jobId } = job.data as { jobId: string };
+    const found = await pool.query("SELECT schedule_id FROM publishing_jobs WHERE id::text=$1", [jobId]).catch(() => null);
+    const scheduleId = found?.rows[0]?.schedule_id;
+    if (scheduleId) await finishIfDone(pool, String(scheduleId)).catch(() => {});
+  }
+});
+
+async function shutdown() {
+  await worker.close();
+  await pool.end();
+  process.exit(0);
+}
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+
+console.log(`One Link worker running: publishing queue.${dryRun ? " DRY RUN: nothing is sent to any platform." : ""}`);

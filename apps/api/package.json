@@ -6,18 +6,21 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.0.0",
     "@fastify/cors": "^10.0.0",
     "@fastify/multipart": "^9.0.0",
+    "@one-link/platform-connectors": "*",
+    "@one-link/shared": "*",
     "better-auth": "1.7.7",
     "bullmq": "^5.0.0",
     "dotenv": "^16.0.0",
-    "kysely": "^0.28.0",
     "fastify": "^5.0.0",
     "ioredis": "^5.0.0",
+    "kysely": "^0.28.0",
     "nodemailer": "^6.0.0",
     "pg": "^8.0.0"
   },
@@ -25,6 +28,7 @@
     "@types/nodemailer": "^6.0.0",
     "@types/pg": "^8.0.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.0"
   }
 }

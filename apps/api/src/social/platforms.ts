@@ -92,17 +92,21 @@ const tiktok: PlatformDef = {
 
 // Facebook + Instagram share the Meta OAuth app. Publishing scopes require
 // Meta app review before they work for anyone but the app's own test users.
-const META_SCOPES =
-  "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish";
-const GRAPH = "https://graph.facebook.com/v21.0";
+// Facebook asks only for what Page posting needs (smaller scope list = simpler Meta app review).
+const FACEBOOK_SCOPES = "pages_show_list,pages_read_engagement,pages_manage_posts";
+const INSTAGRAM_SCOPES = "pages_show_list,pages_read_engagement,instagram_basic,instagram_content_publish";
+// Pin the Graph API version in one place. Override with META_GRAPH_VERSION when Meta retires one.
+const GV = process.env.META_GRAPH_VERSION || "v24.0";
+const GRAPH = `https://graph.facebook.com/${GV}`;
 
 function metaDef(key: "facebook" | "instagram", label: string): PlatformDef {
+  const META_SCOPES = key === "facebook" ? FACEBOOK_SCOPES : INSTAGRAM_SCOPES;
   return {
     key,
     label,
     configured: () => Boolean(process.env.META_APP_ID && process.env.META_APP_SECRET),
     authorizeUrl: (state) =>
-      `https://www.facebook.com/v21.0/dialog/oauth?${new URLSearchParams({
+      `https://www.facebook.com/${GV}/dialog/oauth?${new URLSearchParams({
         client_id: process.env.META_APP_ID ?? "",
         redirect_uri: redirectUri(key),
         scope: META_SCOPES,

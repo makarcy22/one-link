@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "One Link — Create once. Reach everywhere.",
+  "description": "One Link \u2014 Create once. Reach everywhere.",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -13,7 +13,11 @@
     "build:all": "npm run build --workspaces --if-present",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
-    "infra:ps": "docker compose ps"
+    "infra:ps": "docker compose ps",
+    "test": "npm run test --workspaces --if-present",
+    "postinstall": "npm run build:packages",
+    "build:packages": "npm run build -w @one-link/shared && npm run build -w @one-link/platform-connectors",
+    "dev:web:mock": "npm run dev:mock -w @one-link/web"
   },
   "engines": {
     "node": ">=22"

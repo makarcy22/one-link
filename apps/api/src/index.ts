@@ -4,7 +4,7 @@ import fastifyCors from "@fastify/cors";
 import multipart from "@fastify/multipart";
 import { fromNodeHeaders } from "better-auth/node";
 import { auth } from "./auth.js";
-import { checkDatabase, describeDatabase } from "./db.js";
+import { checkDatabase } from "./db.js";
 import { brandRoutes } from "./routes/brands.js";
 import { mediaRoutes } from "./routes/media.js";
 import { projectRoutes } from "./routes/projects.js";
@@ -15,12 +15,15 @@ import { analyticsRoutes } from "./routes/analytics.js";
 import { aiRoutes } from "./routes/ai.js";
 import { billingRoutes } from "./routes/billing.js";
 import { socialRoutes } from "./social/routes.js";
+import { notificationRoutes } from "./routes/notifications.js";
+import { prefsRoutes } from "./routes/prefs.js";
+import { libraryRoutes } from "./routes/library.js";
+import { overviewRoutes } from "./routes/overview.js";
 
 const fastify = Fastify({ logger: true });
-const env = process.env as Record<string, string | undefined>;
 
 await fastify.register(fastifyCors, {
-  origin: env.CLIENT_ORIGIN ?? "https://one-link-studio.netlify.app",
+  origin: (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   credentials: true,
@@ -90,10 +93,14 @@ await fastify.register(analyticsRoutes);
 await fastify.register(aiRoutes);
 await fastify.register(billingRoutes);
 await fastify.register(socialRoutes);
+await fastify.register(notificationRoutes);
+await fastify.register(prefsRoutes);
+await fastify.register(libraryRoutes);
+await fastify.register(overviewRoutes);
 
 try {
   // Render (and most hosts) inject PORT and require binding 0.0.0.0.
-  const port = Number(env.PORT ?? 3000);
+  const port = Number(process.env.PORT ?? 3000);
   await fastify.listen({ port, host: "0.0.0.0" });
   console.log(`One Link API running on port ${port}`);
 } catch (err) {

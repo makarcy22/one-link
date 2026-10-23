@@ -1,40 +1,16 @@
-// Platform connector abstraction. Each connector implements only what its
-// platform supports. The mock connector below stands in until real OAuth
-// platform adapters are added in the review pass.
+// Which platforms One Link can post to by itself, and which need a person's hands.
+// The real logic lives in @one-link/shared; this file keeps the old import path working.
+import { isPlatformKey, publishMode, type PublishMode } from "@one-link/shared";
 
-export type PlatformMode = "direct" | "manual";
+export type PlatformMode = PublishMode;
 
-export interface PublishResult {
-  ok: boolean;
-  externalId: string;
-  message: string;
-}
-
-const MODES: Record<string, PlatformMode> = {
-  tiktok: "direct",
-  instagram: "direct",
-  facebook: "direct",
-  linkedin: "direct",
-  x: "direct",
-  whatsapp: "manual",
-};
-
+/** "direct" = One Link posts for you. "soon" = connect now, posting comes next. "manual" = you post it. */
 export function platformMode(platform: string): PlatformMode {
-  return MODES[platform.toLowerCase()] ?? "manual";
+  const key = platform.toLowerCase();
+  return isPlatformKey(key) ? publishMode(key) : "manual";
 }
 
-export async function mockPublish(platform: string, title: string): Promise<PublishResult> {
-  const mode = platformMode(platform);
-  if (mode === "manual") {
-    return {
-      ok: false,
-      externalId: "",
-      message: `${platform} requires manual posting; export prepared for "${title}".`,
-    };
-  }
-  return {
-    ok: true,
-    externalId: `mock_${Date.now()}`,
-    message: `Published to ${platform} (mock connector): "${title}".`,
-  };
+/** True only when a real publisher exists. Everything else is prepared for the person to post. */
+export function canAutoPublish(platform: string): boolean {
+  return platformMode(platform) === "direct";
 }

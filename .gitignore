@@ -19,3 +19,15 @@ build/
 .vite/
 coverage/
 storage/
+
+# Compiled output that must never sit next to sources
+apps/*/src/**/*.js
+apps/*/src/**/*.js.map
+apps/*/src/**/*.d.ts
+!apps/web/src/vite-env.d.ts
+
+backup-before-v2-*/
+
+.idea/
+one-link-v2-update/
+backup-before-v2-*/

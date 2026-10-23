@@ -1,5 +1,7 @@
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { twoFactor } from "better-auth/plugins";
+import { checkAvatar, checkName } from "./avatar.js";
 import { pool } from "./db.js";
 import { sendEmail } from "./email.js";
 
@@ -15,7 +17,7 @@ async function audit(userId: string, event: string) {
 export const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
-  trustedOrigins: [process.env.CLIENT_ORIGIN ?? "http://localhost:5173"],
+  trustedOrigins: (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
   rateLimit: {
     enabled: true,
     window: 60,
@@ -45,6 +47,22 @@ export const auth = betterAuth({
   plugins: [twoFactor()],
   databaseHooks: {
     user: {
+      update: {
+        // Keep profile pictures small and safe, and names tidy.
+        before: async (data) => {
+          const d = data as Record<string, unknown>;
+          if ("image" in d) {
+            const r = checkAvatar(d.image);
+            if (!r.ok) throw new APIError("BAD_REQUEST", { message: r.error });
+          }
+          if ("name" in d) {
+            const r = checkName(d.name);
+            if (!r.ok) throw new APIError("BAD_REQUEST", { message: r.error });
+            d.name = r.name;
+          }
+          return { data: d };
+        },
+      },
       create: {
         after: async (user) => {
           await audit(user.id, "signup");

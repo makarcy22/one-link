@@ -10,131 +10,108 @@ import Assistant from "./pages/Assistant";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import { SECTIONS } from "./lib/sections";
+import Notifications from "./components/Notifications";
+import Onboarding from "./components/Onboarding";
+import { Avatar, Icon, Logo, ToastProvider } from "./components/ui";
+import { SECTIONS, SECTION_ICON } from "./lib/sections";
 import type { Section } from "./lib/sections";
+import { applyTheme, getTheme } from "./lib/theme";
+import { api } from "./lib/api";
 import { signOut, useSession } from "./auth/auth-client";
 import "./styles.css";
 
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-}
-
 const PAGES: Record<Section, ComponentType<{ go: (s: Section) => void }>> = {
-  Home,
-  Create,
-  Trends,
-  Inspire,
-  Planner,
-  Analytics,
-  Assistant,
-  Profile,
+  Home, Create, Trends, Inspire, Planner, Analytics, Assistant, Profile,
 };
-
 type AuthView = "signin" | "signup" | null;
 
 export default function App() {
   const [section, setSection] = useState<Section>("Home");
   const [authView, setAuthView] = useState<AuthView>(null);
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [bell, setBell] = useState(0);
+  const [dark, setDark] = useState(() => (getTheme() === "dark") || (getTheme() === "system" && window.matchMedia?.("(prefers-color-scheme: dark)").matches));
   const { data: session, isPending } = useSession();
+  const userId = session?.user.id;
 
+  useEffect(() => { applyTheme(getTheme()); }, []);
   useEffect(() => {
-    const handler = (event: Event) => {
-      event.preventDefault();
-      setInstallPrompt(event as BeforeInstallPromptEvent);
-    };
-
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    const h = (e: Event) => setAuthView((e as CustomEvent<"signin" | "signup">).detail);
+    window.addEventListener("ol-auth", h);
+    return () => window.removeEventListener("ol-auth", h);
   }, []);
 
-  async function installApp() {
-    if (!installPrompt) return;
-    await installPrompt.prompt();
-    await installPrompt.userChoice;
-    setInstallPrompt(null);
-  }
+  useEffect(() => {
+    if (!userId) { setNeedsOnboarding(false); return; }
+    api.get("/api/prefs").then((p: { onboarded: boolean }) => setNeedsOnboarding(!p.onboarded)).catch(() => {});
+  }, [userId]);
 
   function openSection(s: Section) {
     setSection(s);
     setAuthView(null);
+    window.scrollTo?.({ top: 0 });
+  }
+  function toggleTheme() {
+    const next = dark ? "light" : "dark";
+    applyTheme(next);
+    setDark(!dark);
   }
 
   const Page = PAGES[section];
-
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <div className="brand">
-          one link <span>/</span> studio
-        </div>
-        {SECTIONS.map((s) => (
-          <button
-            key={s}
-            className={s === section && !authView ? "nav-item active" : "nav-item"}
-            onClick={() => openSection(s)}
-          >
-            {s}
-          </button>
-        ))}
-        <div style={{ marginTop: "auto", paddingTop: 12 }}>
-          {installPrompt && (
-            <button className="nav-item" onClick={installApp}>
-              Install app
+    <ToastProvider>
+      <div className="app">
+        <aside className="sidebar" aria-label="Main">
+          <div className="brand"><Logo size={32} /><div>One Link<small>Create once. Reach everywhere.</small></div></div>
+          {SECTIONS.map((s) => (
+            <button key={s} className={s === section && !authView ? "nav-item active" : "nav-item"} aria-current={s === section && !authView ? "page" : undefined} onClick={() => openSection(s)}>
+              <Icon name={SECTION_ICON[s]} />{s}
             </button>
-          )}
-          {isPending ? (
-            <p style={{ color: "#cbd5e1", fontSize: 13 }}>Checking session…</p>
-          ) : session ? (
-            <>
-              <p style={{ color: "#cbd5e1", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis" }}>
-                {session.user.email}
-              </p>
-              <button
-                className="nav-item"
-                onClick={async () => {
-                  await signOut();
-                  openSection("Home");
-                }}
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                className={authView === "signin" ? "nav-item active" : "nav-item"}
-                onClick={() => setAuthView("signin")}
-              >
-                Sign in
-              </button>
-              <button
-                className={authView === "signup" ? "nav-item active" : "nav-item"}
-                onClick={() => setAuthView("signup")}
-              >
-                Sign up
-              </button>
-            </>
-          )}
+          ))}
+          <div className="side-foot">
+            {isPending ? (
+              <span className="who">Checking your session…</span>
+            ) : session ? (
+              <>
+                <button className="me" onClick={() => openSection("Profile")} aria-label="Open your profile">
+                  <Avatar name={session.user.name} email={session.user.email} src={session.user.image} size={36} />
+                  <span className="me-text"><strong>{session.user.name || session.user.email.split("@")[0]}</strong><small>{session.user.email}</small></span>
+                </button>
+                <button className="nav-item" onClick={async () => { await signOut(); openSection("Home"); }}>Sign out</button>
+              </>
+            ) : (
+              <>
+                <button className={authView === "signin" ? "nav-item active" : "nav-item"} onClick={() => setAuthView("signin")}>Sign in</button>
+                <button className={authView === "signup" ? "nav-item active" : "nav-item"} onClick={() => setAuthView("signup")}>Create account</button>
+              </>
+            )}
+          </div>
+        </aside>
+        <div className="main-wrap">
+          <div className="topbar">
+            <span className="brand mobile-only" style={{ margin: 0, color: "var(--ink)" }}><Logo size={28} /></span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="icon-btn" onClick={toggleTheme} aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}><Icon name={dark ? "sun" : "moon"} /></button>
+              {session && <Notifications go={openSection} refreshKey={bell} />}
+              {session && <button className="icon-btn me-top" onClick={() => openSection("Profile")} aria-label="Your profile"><Avatar name={session.user.name} email={session.user.email} src={session.user.image} size={32} /></button>}
+              {!session && !isPending && <button className="btn btn-dark btn-sm" onClick={() => setAuthView("signin")}>Sign in</button>}
+            </div>
+          </div>
+          <main className="main" id="main">
+            {authView === "signin" && <Login onDone={() => { setBell((b) => b + 1); openSection("Home"); }} onSwitch={() => setAuthView("signup")} />}
+            {authView === "signup" && <Signup onDone={() => openSection("Home")} onSwitch={() => setAuthView("signin")} />}
+            {!authView && <Page key={section} go={openSection} />}
+          </main>
         </div>
-      </aside>
-      <main className="main">
-        {authView === "signin" && <Login onDone={() => openSection("Home")} />}
-        {authView === "signup" && <Signup onDone={() => openSection("Home")} />}
-        {!authView && <Page go={openSection} />}
-      </main>
-      <nav className="tabbar">
-        {SECTIONS.map((s) => (
-          <button
-            key={s}
-            className={s === section && !authView ? "active" : ""}
-            onClick={() => openSection(s)}
-          >
-            {s}
-          </button>
-        ))}
-      </nav>
-    </div>
+        <nav className="tabbar" aria-label="Main">
+          {SECTIONS.map((s) => (
+            <button key={s} className={s === section && !authView ? "active" : ""} aria-current={s === section && !authView ? "page" : undefined} onClick={() => openSection(s)}>
+              <Icon name={SECTION_ICON[s]} size={22} />{s}
+            </button>
+          ))}
+        </nav>
+        {session && needsOnboarding && <Onboarding onDone={() => { setNeedsOnboarding(false); setBell((b) => b + 1); }} />}
+      </div>
+    </ToastProvider>
   );
 }

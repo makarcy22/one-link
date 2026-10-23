@@ -1,8 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { api } from "../lib/api";
-import { API_BASE } from "../lib/backend";
+import { platformLabel } from "@one-link/shared";
+import { api, API_BASE, MOCK, errorText } from "../lib/api";
 import { authClient, twoFactor, useSession } from "../auth/auth-client";
 import type { Section } from "../lib/sections";
+import BillingCard from "../components/BillingCard";
+import FacebookPages from "../components/FacebookPages";
+import AccountCard from "../components/AccountCard";
+import { PageHead, PlatformDot, StatusPill } from "../components/ui";
 
 interface Brand {
   id: string;
@@ -12,27 +16,12 @@ interface Brand {
   voice: string;
 }
 
-interface Conn {
-  platform: string;
-  account_name: string;
-  status: string;
-  expires_at: string | null;
-}
-
 const EMPTY: Brand = { id: "", name: "", description: "", website: "", voice: "Casual" };
-const PLATFORM_LIST = ["tiktok", "instagram", "facebook", "linkedin", "x"];
 
 export default function Profile({ go }: { go: (s: Section) => void }) {
   void go;
-  const { data: session, isPending } = useSession();
-
   const [brand, setBrand] = useState<Brand>(EMPTY);
   const [status, setStatus] = useState("Loading…");
-  const [apiError, setApiError] = useState("");
-  const [conns, setConns] = useState<Conn[]>([]);
-  const [config, setConfig] = useState<Record<string, boolean>>({});
-  const [sub, setSub] = useState<{ plan: string; used: number; limit: number } | null>(null);
-  const [subMsg, setSubMsg] = useState("");
   const [connectNote, setConnectNote] = useState("");
   const [verifyNote, setVerifyNote] = useState("");
   const [tfPassword, setTfPassword] = useState("");
@@ -40,69 +29,41 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [tfCode, setTfCode] = useState("");
   const [tfMsg, setTfMsg] = useState("");
-  const nameRef = useRef<HTMLInputElement>(null);
+  const [sub, setSub] = useState<{ plan: string; used: number; limit: number } | null>(null);
+  const [subMsg, setSubMsg] = useState("");
 
-  async function loadAll() {
-    setApiError("");
+  async function loadSub() {
     try {
-      const [brands, cfg, list, subscription] = await Promise.all([
-        api.get("/api/brands"),
-        api.get("/api/social/config"),
-        api.get("/api/social"),
-        api.get("/api/billing/status"),
-      ]);
-      if (brands[0]) setBrand(brands[0]);
-      setConfig(cfg);
-      setConns(list);
-      setSub(subscription);
-      setStatus("");
+      setSub(await api.get("/api/billing/status"));
     } catch {
-      // Keep previously loaded data; say what is wrong instead of blanking the screen.
-      setApiError("Could not reach the API. Check that the backend is running, then Retry.");
-      setStatus("");
+      setSub(null);
     }
   }
 
-  useEffect(() => {
-    if (!session) return;
-    loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
-
-  if (isPending) {
-    return (
-      <>
-        <h2>Brand profile</h2>
-        <p className="muted">Checking session…</p>
-      </>
-    );
-  }
-
-  if (!session) {
-    return (
-      <>
-        <h2>Brand profile</h2>
-        <div className="card">
-          <h3>Sign in required</h3>
-          <p>
-            Brand profiles, connected accounts, billing, and security settings belong to an
-            account. Sign in from the sidebar first — nothing here loads until then.
-          </p>
-        </div>
-      </>
-    );
-  }
-
-  async function save() {
-    setStatus("Saving…");
+  async function checkout(plan: string) {
+    setSubMsg("Opening checkout…");
     try {
-      const saved = brand.id
-        ? await api.put(`/api/brands/${brand.id}`, brand)
-        : await api.post("/api/brands", brand);
-      setBrand(saved);
-      setStatus("Saved.");
+      const res = await api.post("/api/billing/checkout", { plan });
+      if (res.authorization_url) window.location.href = res.authorization_url as string;
+      else setSubMsg("Checkout failed — billing keys may be missing. See docs/payments.md.");
     } catch {
-      setStatus("Save failed.");
+      setSubMsg("Checkout failed — billing keys may be missing. See docs/payments.md.");
+    }
+  }
+  const [conns, setConns] = useState<
+    { platform: string; account_name: string; status: string; expires_at: string | null }[]
+  >([]);
+  const [config, setConfig] = useState<Record<string, boolean>>({});
+  const nameRef = useRef<HTMLInputElement>(null);
+  const { data: session } = useSession();
+
+  async function loadSocial() {
+    try {
+      const [c, list] = await Promise.all([api.get("/api/social/config"), api.get("/api/social")]);
+      setConfig(c);
+      setConns(list);
+    } catch {
+      setConns([]);
     }
   }
 
@@ -116,6 +77,18 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
     const { error } = await authClient.sendVerificationEmail({ email });
     setVerifyNote(error ? error.message ?? "Send failed." : "Verification email sent — check your inbox.");
   }
+
+  useEffect(() => {
+    api
+      .get("/api/brands")
+      .then((rows: Brand[]) => {
+        if (rows[0]) setBrand(rows[0]);
+        setStatus("");
+      })
+      .catch(() => setStatus("Could not reach the API — is it running?"));
+    loadSocial();
+    loadSub();
+  }, []);
 
   async function enable2fa() {
     setTfMsg("Enabling…");
@@ -147,102 +120,45 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
     }
   }
 
-  async function checkout(plan: string) {
-    setSubMsg("Opening checkout…");
+  async function save() {
+    setStatus("Saving…");
     try {
-      const res = await api.post("/api/billing/checkout", { plan });
-      if (res.authorization_url) window.location.href = res.authorization_url as string;
-      else setSubMsg("Checkout failed — billing keys may be missing. See docs/payments.md.");
+      const saved = brand.id
+        ? await api.put(`/api/brands/${brand.id}`, brand)
+        : await api.post("/api/brands", brand);
+      setBrand(saved);
+      setStatus("Saved.");
     } catch {
-      setSubMsg("Checkout failed — billing keys may be missing. See docs/payments.md.");
+      setStatus("Save failed.");
     }
-  }
-
-  async function disconnect(p: string) {
-    await api.del(`/api/social/${p}`).catch(() => {});
-    await loadAll();
-  }
-
-  async function refreshConn(p: string) {
-    try {
-      await api.post(`/api/social/${p}/refresh`, {});
-      setConnectNote("Tokens refreshed.");
-    } catch {
-      setConnectNote("Refresh failed — the account may need reconnecting.");
-    }
-    await loadAll();
   }
 
   return (
     <>
-      <h2>Brand profile</h2>
-      <p className="muted">The AI uses this to keep content consistent.</p>
-      {apiError && (
-        <div className="card">
-          <h3>Connection problem</h3>
-          <p>{apiError}</p>
-          <div className="row">
-            <button className="btn btn-dark" onClick={loadAll}>
-              Retry
-            </button>
-          </div>
+      <PageHead title="Profile" sub="Your account, your brand, your plan, your connected accounts and security." />
+      <AccountCard />
+      <div className="card">
+        <h3>Brand profile</h3>
+        <p className="muted">The AI uses this to keep your posts sounding like you.</p>
+        {status && <p className="muted">{status}</p>}
+        <div className="stack">
+          <label className="field" htmlFor="b-name">Brand name<input autoComplete="off" id="b-name" ref={nameRef} value={brand.name} onChange={(e) => setBrand({ ...brand, name: e.target.value })} /></label>
+          <label className="field" htmlFor="b-desc">What you do<input autoComplete="off" id="b-desc" value={brand.description} onChange={(e) => setBrand({ ...brand, description: e.target.value })} /></label>
+          <label className="field" htmlFor="b-web">Website<input autoComplete="off" id="b-web" value={brand.website} onChange={(e) => setBrand({ ...brand, website: e.target.value })} /></label>
+          <label className="field" htmlFor="b-voice">Voice
+            <select id="b-voice" value={brand.voice} onChange={(e) => setBrand({ ...brand, voice: e.target.value })}>
+              {["Casual", "Professional", "Funny", "Inspirational", "Promotional"].map((v) => <option key={v}>{v}</option>)}
+            </select>
+          </label>
         </div>
-      )}
-      {status && <p className="muted">{status}</p>}
-      <label>
-        Brand name
-        <input
-          ref={nameRef}
-          value={brand.name}
-          onChange={(e) => setBrand({ ...brand, name: e.target.value })}
-        />
-      </label>
-      <br />
-      <br />
-      <label>
-        Description
-        <input value={brand.description} onChange={(e) => setBrand({ ...brand, description: e.target.value })} />
-      </label>
-      <br />
-      <br />
-      <label>
-        Website
-        <input value={brand.website} onChange={(e) => setBrand({ ...brand, website: e.target.value })} />
-      </label>
-      <br />
-      <br />
-      <label>
-        Voice
-        <select value={brand.voice} onChange={(e) => setBrand({ ...brand, voice: e.target.value })}>
-          {["Casual", "Professional", "Funny", "Inspirational", "Promotional"].map((v) => (
-            <option key={v}>{v}</option>
-          ))}
-        </select>
-      </label>
-      <div className="row">
-        <button className="btn btn-dark" onClick={save}>
-          Save profile
-        </button>
-        <button className="btn" onClick={() => nameRef.current?.focus()}>
-          Edit name
-        </button>
-        <button
-          className="btn"
-          onClick={() =>
-            setConnectNote(
-              "Social connectors arrive in the review pass — your One Link login is the connected identity for now."
-            )
-          }
-        >
-          Connect account
-        </button>
+        <div className="row"><button className="btn btn-dark" onClick={save}>Save profile</button></div>
       </div>
-      {connectNote && <p className="muted">{connectNote}</p>}
-
+      {connectNote && <p className="notice notice-info">{connectNote}</p>}
       <div className="card">
         <h3>Email verification</h3>
         <p>
-          Status: <strong>{session?.user.emailVerified ? "Verified" : "Not verified"}</strong>
+          Status:{" "}
+          <strong>{session?.user.emailVerified ? "Verified" : "Not verified"}</strong>
         </p>
         {!session?.user.emailVerified && (
           <div className="row">
@@ -253,7 +169,7 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
         )}
         {verifyNote && <p className="muted">{verifyNote}</p>}
       </div>
-
+      <BillingCard />
       <div className="card">
         <h3>Two-factor authentication</h3>
         <p>
@@ -297,68 +213,37 @@ export default function Profile({ go }: { go: (s: Section) => void }) {
         )}
         {tfMsg && <p className="muted">{tfMsg}</p>}
       </div>
-
       <div className="card">
-        <h3>Subscription</h3>
-        {sub ? (
-          <p>
-            Plan: <strong style={{ textTransform: "capitalize" }}>{sub.plan}</strong> · AI
-            usage this month: {sub.used}/{sub.limit}
-          </p>
-        ) : (
-          <p>Plan data unavailable — check the connection above.</p>
-        )}
-        <div className="row">
-          <button className="btn btn-dark" onClick={() => checkout("creator")}>
-            Upgrade to Creator
-          </button>
-          <button className="btn btn-dark" onClick={() => checkout("business")}>
-            Upgrade to Business
-          </button>
-        </div>
-        {subMsg && <p className="muted">{subMsg}</p>}
-      </div>
-
-      <div className="grid">
-        <div className="card">
-          <h3>Connected accounts (5)</h3>
-          {PLATFORM_LIST.map((p) => {
+        <h3>Connected accounts</h3>
+        <p className="muted">Facebook posts for you automatically. For the others, connecting now means they are ready when automatic posting arrives. Until then we prepare your post and remind you.</p>
+        <div className="list">
+          {(["facebook", "instagram", "tiktok", "linkedin", "x"] as const).map((p) => {
             const conn = conns.find((c) => c.platform === p);
             const ready = config[p];
             return (
-              <p key={p}>
-                <strong style={{ textTransform: "capitalize" }}>{p}</strong>:{" "}
-                {conn ? `${conn.account_name} · ${conn.status}` : "not connected"}{" "}
+              <div key={p} className="list-item">
+                <div className="grow">
+                  <div className="title"><PlatformDot platform={p} />{platformLabel(p)}{p === "facebook" ? "" : <span className="pill pill-warn" style={{ marginLeft: 8 }}>Posting soon</span>}</div>
+                  <div className="muted small">{conn ? conn.account_name : ready ? "Not connected" : "Needs setup by the owner. See docs/social-connectors.md"}</div>
+                </div>
+                {conn && <StatusPill status={conn.status} />}
                 {conn ? (
                   <>
-                    <button className="btn" onClick={() => disconnect(p)}>
-                      Disconnect
-                    </button>{" "}
-                    <button className="btn" onClick={() => refreshConn(p)}>
-                      Refresh
-                    </button>
+                    <button className="btn btn-sm" onClick={async () => {
+                      try { await api.post(`/api/social/${p}/refresh`, {}); setConnectNote("Connection renewed."); } catch (e) { setConnectNote(errorText(e)); }
+                      await loadSocial();
+                    }}>Renew</button>
+                    <button className="btn btn-sm btn-quiet" onClick={async () => { await api.del(`/api/social/${p}`).catch(() => {}); await loadSocial(); }}>Disconnect</button>
                   </>
                 ) : ready ? (
-                  <button
-                    className="btn btn-dark"
-                    onClick={() => {
-                      window.location.href = `${API_BASE}/api/social/${p}/connect`;
-                    }}
-                  >
-                    Connect
-                  </button>
-                ) : (
-                  <span className="muted">keys needed — see docs/social-connectors.md</span>
-                )}
-              </p>
+                  <button className="btn btn-sm btn-dark" onClick={() => { if (MOCK) { import("../dev/mockApi").then((m) => { if (p === "facebook") m.connectDemoFacebook(); setConnectNote("Preview only: nothing real was connected. On your own server this opens the network's sign-in."); loadSocial(); }); return; } window.location.href = `${API_BASE}/api/social/${p}/connect`; }}>Connect</button>
+                ) : null}
+              </div>
             );
           })}
         </div>
-        <div className="card">
-          <h3>Saved assets</h3>
-          <p>Captions, hashtag groups, templates.</p>
-        </div>
       </div>
+      <FacebookPages connected={conns.some((c) => c.platform === "facebook" && c.status === "connected")} reloadKey={conns.length} />
     </>
   );
 }

@@ -48,7 +48,8 @@ means "do not deploy this" — fix first, then push again.
    - Google/Meta/LinkedIn/TikTok OAuth redirect URIs and origins in each provider console
 5. Apply database tables to the Render Postgres (connect string from Render dashboard):
    - Better Auth: run `npx auth@latest migrate` against it, or apply the generated SQL.
-   - App tables: apply `apps/api/migrations/001_core.sql` and `002_social.sql`.
+   - App tables: apply every numbered file in `apps/api/migrations/` in order (`001` to `006`).
+     `verify_2fa.sql` is a check script, not a migration.
 6. Redeploy the API so the corrected URLs take effect.
 
 ## 3. Run the worker
