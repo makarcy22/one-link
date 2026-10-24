@@ -17,7 +17,7 @@ async function audit(userId: string, event: string) {
 export const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
-  trustedOrigins: (process.env.CLIENT_ORIGIN || "http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
+  trustedOrigins: (process.env.CLIENT_ORIGIN || "https://one-link-studio.netlify.app,http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
   rateLimit: {
     enabled: true,
     window: 60,

@@ -11,6 +11,8 @@
   "scripts": {
     "setup": "npm install",
     "build:all": "npm run build --workspaces --if-present",
+    "build:web": "npm --workspace apps/web run build",
+    "android:build": "npm --workspace apps/web run android:build",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
     "infra:ps": "docker compose ps",

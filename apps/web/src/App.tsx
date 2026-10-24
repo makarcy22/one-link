@@ -1,13 +1,5 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import type { ComponentType } from "react";
-import Home from "./pages/Home";
-import Create from "./pages/Create";
-import Trends from "./pages/Trends";
-import Inspire from "./pages/Inspire";
-import Planner from "./pages/Planner";
-import Analytics from "./pages/Analytics";
-import Assistant from "./pages/Assistant";
-import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Notifications from "./components/Notifications";
@@ -20,8 +12,16 @@ import { api } from "./lib/api";
 import { signOut, useSession } from "./auth/auth-client";
 import "./styles.css";
 
+// Each page loads when it is first opened, so the first screen appears faster.
 const PAGES: Record<Section, ComponentType<{ go: (s: Section) => void }>> = {
-  Home, Create, Trends, Inspire, Planner, Analytics, Assistant, Profile,
+  Home: lazy(() => import("./pages/Home")),
+  Create: lazy(() => import("./pages/Create")),
+  Trends: lazy(() => import("./pages/Trends")),
+  Inspire: lazy(() => import("./pages/Inspire")),
+  Planner: lazy(() => import("./pages/Planner")),
+  Analytics: lazy(() => import("./pages/Analytics")),
+  Assistant: lazy(() => import("./pages/Assistant")),
+  Profile: lazy(() => import("./pages/Profile")),
 };
 type AuthView = "signin" | "signup" | null;
 
@@ -100,7 +100,11 @@ export default function App() {
           <main className="main" id="main">
             {authView === "signin" && <Login onDone={() => { setBell((b) => b + 1); openSection("Home"); }} onSwitch={() => setAuthView("signup")} />}
             {authView === "signup" && <Signup onDone={() => openSection("Home")} onSwitch={() => setAuthView("signin")} />}
-            {!authView && <Page key={section} go={openSection} />}
+            {!authView && (
+              <Suspense fallback={<div className="page-loading" role="status">Loading…</div>}>
+                <Page key={section} go={openSection} />
+              </Suspense>
+            )}
           </main>
         </div>
         <nav className="tabbar" aria-label="Main">

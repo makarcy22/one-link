@@ -266,3 +266,5 @@ button.chip.on { background: var(--ink); color: var(--bg); border-color: var(--i
 .account-id p { margin: 2px 0 0; }
 .account-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: end; margin-top: 18px; }
 @media (max-width: 520px) { .account-form { grid-template-columns: minmax(0, 1fr); } }
+
+.page-loading { padding: 40px 0; color: var(--muted); font-weight: 600; }
