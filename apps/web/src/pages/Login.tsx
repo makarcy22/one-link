@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { authClient, signIn, twoFactor } from "../auth/auth-client";
 import { Logo } from "../components/ui";
+import { SLEEPING_MESSAGE } from "../lib/api";
+import { useSlow } from "../lib/useSlow";
 
 export default function Login({ onDone, onSwitch }: { onDone: () => void; onSwitch?: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const slow = useSlow(busy);
   const [showForgot, setShowForgot] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [forgotMsg, setForgotMsg] = useState("");
@@ -20,7 +23,7 @@ export default function Login({ onDone, onSwitch }: { onDone: () => void; onSwit
     const { data, error } = await signIn.email({ email, password });
     setBusy(false);
     if (error) {
-      setError(error.message ?? "Sign in failed.");
+      setError(/<!doctype|unexpected token/i.test(error.message ?? "") ? SLEEPING_MESSAGE : error.message ?? "Sign in failed.");
       return;
     }
     const needs2fa = (data as unknown as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect;
@@ -91,6 +94,7 @@ export default function Login({ onDone, onSwitch }: { onDone: () => void; onSwit
               </label>
               {error && <p className="auth-error" role="alert">{error}</p>}
               <button className="btn btn-hero" type="submit" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
+              {slow && <p className="auth-hint" role="status">Still working. The server may have been asleep, so the first time can take up to a minute.</p>}
               <button className="btn btn-quiet btn-sm auth-link" type="button" onClick={() => setShowForgot((v) => !v)}>Forgot password?</button>
             </form>
           </>

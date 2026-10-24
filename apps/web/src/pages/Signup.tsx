@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { signUp } from "../auth/auth-client";
 import { Logo } from "../components/ui";
+import { SLEEPING_MESSAGE } from "../lib/api";
+import { useSlow } from "../lib/useSlow";
 
 export default function Signup({ onDone, onSwitch }: { onDone: () => void; onSwitch?: () => void }) {
   const [name, setName] = useState("");
@@ -8,6 +10,7 @@ export default function Signup({ onDone, onSwitch }: { onDone: () => void; onSwi
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const slow = useSlow(busy);
   const [sentTo, setSentTo] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
@@ -17,7 +20,7 @@ export default function Signup({ onDone, onSwitch }: { onDone: () => void; onSwi
     const { data, error } = await signUp.email({ name, email, password });
     setBusy(false);
     if (error) {
-      setError(error.message ?? "Sign up failed.");
+      setError(/<!doctype|unexpected token/i.test(error.message ?? "") ? SLEEPING_MESSAGE : error.message ?? "Sign up failed.");
       return;
     }
     // When email verification is required there is no session yet: ask them to check their inbox.
@@ -64,6 +67,7 @@ export default function Signup({ onDone, onSwitch }: { onDone: () => void; onSwi
           </label>
           {error && <p className="auth-error" role="alert">{error}</p>}
           <button className="btn btn-hero" type="submit" disabled={busy}>{busy ? "Creating…" : "Create account"}</button>
+          {slow && <p className="auth-hint" role="status">Still working. The server may have been asleep, so the first time can take up to a minute.</p>}
         </form>
         {onSwitch && <p className="auth-switch">Already have an account? <button type="button" onClick={onSwitch}>Sign in</button></p>}
       </div>

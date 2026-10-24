@@ -3,6 +3,16 @@ export const API_BASE: string = import.meta.env.VITE_API_URL ?? "http://localhos
 export const MOCK: boolean = import.meta.env.VITE_MOCK_API === "true";
 const BASE = API_BASE;
 
+export const SLEEPING_MESSAGE = "The server is waking up after a quiet period. This can take up to a minute. Please wait a little and try again.";
+
+/** Ask the server to wake up in the background (free hosting puts it to sleep when it is idle). */
+let warmed = false;
+export function wakeServer() {
+  if (MOCK || warmed) return;
+  warmed = true;
+  fetch(`${BASE}/api/auth/ok`, { method: "GET", mode: "cors" }).catch(() => { warmed = false; });
+}
+
 async function req(path: string, init?: RequestInit) {
   if (MOCK) {
     const { mockRequest } = await import("../dev/mockApi");
@@ -14,6 +24,8 @@ async function req(path: string, init?: RequestInit) {
     headers: { "Content-Type": "application/json" },
     ...init,
   });
+  // A web page (not data) means the server is still starting up, or the address is wrong.
+  if ((res.headers.get("content-type") ?? "").includes("text/html")) throw new Error(SLEEPING_MESSAGE);
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     let message = text || res.statusText;
@@ -54,6 +66,7 @@ export const api = {
 /** The message from a failed call, ready to show to a person. */
 export function errorText(e: unknown, fallback = "Something went wrong. Try again."): string {
   const m = e instanceof Error ? e.message : "";
+  if (/<!doctype|unexpected token/i.test(m)) return SLEEPING_MESSAGE;
   if (!m || /failed to fetch|networkerror|load failed/i.test(m)) return "Could not reach One Link. Check your connection and that the server is running.";
   return m || fallback;
 }

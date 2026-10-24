@@ -8,7 +8,7 @@ import { Avatar, Icon, Logo, ToastProvider } from "./components/ui";
 import { SECTIONS, SECTION_ICON } from "./lib/sections";
 import type { Section } from "./lib/sections";
 import { applyTheme, getTheme } from "./lib/theme";
-import { api } from "./lib/api";
+import { api, wakeServer } from "./lib/api";
 import { signOut, useSession } from "./auth/auth-client";
 import "./styles.css";
 
@@ -34,7 +34,7 @@ export default function App() {
   const { data: session, isPending } = useSession();
   const userId = session?.user.id;
 
-  useEffect(() => { applyTheme(getTheme()); }, []);
+  useEffect(() => { applyTheme(getTheme()); wakeServer(); }, []);
   useEffect(() => {
     const h = (e: Event) => setAuthView((e as CustomEvent<"signin" | "signup">).detail);
     window.addEventListener("ol-auth", h);
