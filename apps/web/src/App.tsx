@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Notifications from "./components/Notifications";
 import Onboarding from "./components/Onboarding";
+import InstallBanner from "./components/InstallBanner";
 import { Avatar, Icon, Logo, ToastProvider } from "./components/ui";
 import { SECTIONS, SECTION_ICON } from "./lib/sections";
 import type { Section } from "./lib/sections";
@@ -60,6 +61,7 @@ export default function App() {
   const Page = PAGES[section];
   return (
     <ToastProvider>
+      <InstallBanner />
       <div className="app">
         <aside className="sidebar" aria-label="Main">
           <div className="brand"><Logo size={32} /><div>One Link<small>Create once. Reach everywhere.</small></div></div>
