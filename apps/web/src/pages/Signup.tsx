@@ -17,7 +17,7 @@ export default function Signup({ onDone, onSwitch }: { onDone: () => void; onSwi
     e.preventDefault();
     setError("");
     setBusy(true);
-    const { data, error } = await signUp.email({ name, email, password });
+    const { data, error } = await signUp.email({ name, email, password, callbackURL: window.location.origin });
     setBusy(false);
     if (error) {
       setError(/<!doctype|unexpected token/i.test(error.message ?? "") ? SLEEPING_MESSAGE : error.message ?? "Sign up failed.");

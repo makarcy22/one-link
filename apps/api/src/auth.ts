@@ -18,6 +18,16 @@ export const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   trustedOrigins: (process.env.CLIENT_ORIGIN || "https://one-link-studio.netlify.app,http://localhost:5173").split(",").map((s) => s.trim()).filter(Boolean),
+  // The site (Netlify) and the server (Render) are different web addresses, so the
+  // sign-in cookie must be allowed to travel between them. Only when served over https.
+  ...(String(process.env.BETTER_AUTH_URL ?? "").startsWith("https://")
+    ? {
+        advanced: {
+          useSecureCookies: true,
+          defaultCookieAttributes: { sameSite: "none" as const, secure: true, partitioned: true },
+        },
+      }
+    : {}),
   rateLimit: {
     enabled: true,
     window: 60,
@@ -36,6 +46,7 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
+    autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) => {
       await sendEmail(
         user.email,

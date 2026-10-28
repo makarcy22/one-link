@@ -20,7 +20,7 @@ export default function Login({ onDone, onSwitch }: { onDone: () => void; onSwit
     e.preventDefault();
     setError("");
     setBusy(true);
-    const { data, error } = await signIn.email({ email, password });
+    const { data, error } = await signIn.email({ email, password, callbackURL: window.location.origin });
     setBusy(false);
     if (error) {
       setError(/<!doctype|unexpected token/i.test(error.message ?? "") ? SLEEPING_MESSAGE : error.message ?? "Sign in failed.");
